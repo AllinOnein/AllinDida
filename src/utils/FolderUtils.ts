@@ -1,4 +1,5 @@
    import { App, Notice, TFolder } from 'obsidian';
+   import { t } from '@/i18n';
 
    /**
     * Validate the folder, create if needed, and return its path or null.
@@ -12,14 +13,14 @@
      if (!newFolderFile) {
        try {
          newFolderFile = await app.vault.createFolder(newFolder);
-         new Notice(`New folder ${newFolderFile.path} created.`);
+         new Notice(t('folder.created', { path: newFolderFile.path }));
        } catch (error) {
-         new Notice(`Folder ${newFolder} creation failed: ${String(error)}. Please correct and try again.`, 5000);
+         new Notice(t('folder.createFailed', { name: newFolder, message: String(error) }), 5000);
          return null;
        }
      }
      if (newFolderFile instanceof TFolder) {
-       new Notice(`${folderType} folder is now ${newFolderFile.path}.`);
+       new Notice(t('folder.nowIs', { type: folderType, path: newFolderFile.path }));
        return newFolderFile.path;
      }
      return null;
