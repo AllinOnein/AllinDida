@@ -27,6 +27,9 @@ userData
 
 dist/
 
+# Release 打包暂存目录（供手动上传到 GitHub Releases）
+release-*/
+
 pnpm-lock.yaml
 
 # MkDocs build output
