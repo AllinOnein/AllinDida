@@ -31,9 +31,11 @@ import { NewFileMap } from '@/services/NewFileMap';
 
 //logging
 import log from '@/utils/logger';
+//i18n
+import { initI18n, t } from '@/i18n';
 
 //database
-import { initDB } from '@/db/dexie';
+import { initDB, db } from '@/db/dexie';
 import { migrateFromDataJson } from '@/db/migrations';
 import type { DeviceInfo } from '@/db/schema';
 
@@ -54,6 +56,7 @@ import { TaskOperationsService } from '@/services/TaskOperationsService';
 import { FolderSyncService } from '@/services/FolderSyncService';
 import { FolderMigrationService } from '@/services/FolderMigrationService';
 import { TagService } from '@/services/TagService';
+import { BackupService } from '@/services/BackupService';
 
 export default class TickTickSync extends Plugin {
 
@@ -63,6 +66,7 @@ export default class TickTickSync extends Plugin {
 	readonly fileMetadataService: FileMetadataService = new FileMetadataService();
 	readonly dateMan: DateMan = new DateMan();
 	readonly tagService: TagService = new TagService();
+	readonly backupService: BackupService = new BackupService(this.app, this);
 
 	readonly lastLines: Map<string, number> = new Map(); //lastLine object {path:line} is saved in lastLines map
 
@@ -88,6 +92,8 @@ export default class TickTickSync extends Plugin {
 	private markdownProcessor?: MarkdownProcessor;
 
 	async onload() {
+		// 尽早初始化界面语言，保证后续所有 Notice/Modal 都使用同一语言。
+		initI18n();
 		this.app.workspace.onLayoutReady(async () => {
 			await this.waitForObsidianSync();
 			await this.pluginLoad();
@@ -214,39 +220,77 @@ export default class TickTickSync extends Plugin {
 		return true; // Returning true indicates that the settings are loaded successfully
 	}
 
-	async saveSettings() {
+	/** Last payload written to `data.json`, used to skip redundant disk writes. */
+	private lastSavedSettingsJson?: string;
+	/** Serializes `saveSettings` calls so writes cannot interleave. */
+	private saveSettingsChain: Promise<void> = Promise.resolve();
+
+	/**
+	 * Build the exact object that gets persisted to `data.json`.
+	 *
+	 * Large blobs live in Dexie now, so they are stripped here. Keeping this in
+	 * one place lets {@link saveSettings} compare payloads reliably.
+	 */
+	private buildSettingsPayload(): Record<string, unknown> | null {
+		const inMemorySettings = getSettings();
+		if (!inMemorySettings || Object.keys(inMemorySettings).length === 0) {
+			return null;
+		}
+		const payload = { ...inMemorySettings } as Record<string, unknown>;
+		delete payload.fileMetadata;
+		delete payload.TickTickTasksData;
+		delete payload.__migratedDBData;
+		return payload;
+	}
+
+	/**
+	 * Persist settings to `data.json`.
+	 *
+	 * Calls are serialized and a write that would not change the file is
+	 * skipped. This matters for vaults stored in a synchronised folder: the
+	 * plugin used to rewrite `data.json` on every sync cycle even when nothing
+	 * but the (Dexie-owned) checkpoint had moved, which produced constant
+	 * uploads and occasional conflict copies.
+	 */
+	async saveSettings(): Promise<void> {
+		this.saveSettingsChain = this.saveSettingsChain.then(() => this.writeSettings());
+		return this.saveSettingsChain;
+	}
+
+	private async writeSettings(): Promise<void> {
 		try {
-			const inMemorySettings = getSettings();
+			const settingsToSave = this.buildSettingsPayload();
 			// Verify that the setting exists and is not empty
-			if (inMemorySettings && Object.keys(inMemorySettings).length > 0) {
-				const settingsToSave = { ...inMemorySettings };
-				// Large data is now in Dexie only
-				const saveData = settingsToSave as Record<string, unknown>;
-				delete saveData.fileMetadata;
-				delete saveData.TickTickTasksData;
-				delete saveData.__migratedDBData;
-
-				// Defensive merge: on-disk data.json may have been updated by
-				// another device via Obsidian Sync. Merge devices so that entries
-				// added by other instances are not lost.
-				try {
-					const onDiskData = await this.loadData() as Record<string, unknown> | null;
-					if (onDiskData?.devices && Array.isArray(onDiskData.devices)) {
-						const merged = mergeDeviceLists(
-							onDiskData.devices as DeviceInfo[],
-							settingsToSave.devices || []
-						);
-						settingsToSave.devices = merged;
-						getSettings().devices = merged;
-					}
-				} catch (e) {
-					log.warn('Could not read on-disk settings for device merge', e);
-				}
-
-				await this.saveData(settingsToSave);
-			} else {
+			if (!settingsToSave) {
 				log.warn('Settings are empty or invalid, not saving to avoid data loss.');
+				return;
 			}
+
+			// Defensive merge: on-disk data.json may have been updated by
+			// another device via Obsidian Sync. Merge devices so that entries
+			// added by other instances are not lost.
+			try {
+				const onDiskData = await this.loadData() as Record<string, unknown> | null;
+				if (onDiskData?.devices && Array.isArray(onDiskData.devices)) {
+					const merged = mergeDeviceLists(
+						onDiskData.devices as DeviceInfo[],
+						settingsToSave.devices as DeviceInfo[] || []
+					);
+					settingsToSave.devices = merged;
+					getSettings().devices = merged;
+				}
+			} catch (e) {
+				log.warn('Could not read on-disk settings for device merge', e);
+			}
+
+			const serialized = JSON.stringify(settingsToSave);
+			if (serialized === this.lastSavedSettingsJson) {
+				log.debug('Settings unchanged, skipping data.json write.');
+				return;
+			}
+
+			await this.saveData(settingsToSave);
+			this.lastSavedSettingsJson = serialized;
 		} catch (error) {
 			//Print or handle errors
 			log.error('Error saving settings:', error);
@@ -256,12 +300,16 @@ export default class TickTickSync extends Plugin {
 	// return true of false
 	async initializePlugin(): Promise<boolean> {
 		if (!getSettings().token) {
-			new Notice(`Please login from settings.`);
+			new Notice(t('startup.pleaseLogin'));
 			return false;
 		}
 
 		// Load Dexie first as it's the source of truth
 		await initDB();
+
+		// Read the sync meta before the first synchronization so the startup
+		// sync can run incrementally once this vault has synced before.
+		this.lastSyncMeta = await db.meta.get('sync');
 
 		//NEW: Initialize repositories
 		this.taskRepository = new TaskRepository();
@@ -285,28 +333,23 @@ export default class TickTickSync extends Plugin {
 		const isProjectsSaved = await this.saveProjectsToCache();
 		if (!isProjectsSaved) {// invalid token or offline?
 			this.tickTickRestAPI = undefined;
-			new Notice(`TickTickSync plugin initialization failed, please check userid and password in settings.`);
+			new Notice(t('startup.initFailed'));
 			return false;
 		}
 
 		this.initializeModuleClass();
-		//Create a backup folder to back up TickTick data
-		try {
-			//Back up all data before each startup
-			if (!getSettings().skipBackup) {
-				this.service.backup();
-			}
-		} catch (error) {
-			log.error('error creating user data folder: ', error);
-			new Notice(`Error creating user data folder`);
-			return false;
+		// Back up TickTick data before each startup, but only when the user opted
+		// in. The export is a full dump and TickTick rate-limits it, so it must
+		// not run unconditionally; failures are logged, never fatal.
+		if (getSettings().backupOnStartup) {
+			await this.backupService.backupTickTickData({ quiet: true });
 		}
 		//And now load the DB and sync it.
-		await this.service.synchronization(true);
+		await this.service.synchronization(!this.hasCompletedInitialSync());
 
 		await this.autoCleanupDeletedTasks();
 
-		new Notice('TickTickSync loaded successfully.' + getSettings().skipBackup ? ' Skipping backup.' : 'TickTick data has been backed up.');
+		new Notice(t('startup.loaded'));
 		return true;
 	}
 
@@ -400,7 +443,7 @@ export default class TickTickSync extends Plugin {
 	//return true
 	checkModuleClass() {
 		if (!getSettings().token) {
-			new Notice(`Please login from settings.`);
+			new Notice(t('startup.pleaseLogin'));
 			return false;
 		}
 
@@ -423,10 +466,11 @@ export default class TickTickSync extends Plugin {
 		const filepath = markDownView.file.path;
 		let defaultProjectName = await this.fileMetadataService.getDefaultProjectNameForFilepath(filepath);
 		if (!defaultProjectName) {
+			// 文件名以 Inbox 开头视为收集箱；注意这里只影响状态栏显示文案。
 			if (filepath.startsWith('Inbox')) {
-				defaultProjectName = 'Inbox';
+				defaultProjectName = t('status.inbox');
 			} else {
-				defaultProjectName = 'No default Project';
+				defaultProjectName = t('status.noDefaultProject');
 			}
 		}
 		this.statusBar?.setText(defaultProjectName);
@@ -445,7 +489,7 @@ export default class TickTickSync extends Plugin {
 			await this.autoCleanupDeletedTasks();
 		} catch (error) {
 			log.error('An error occurred: ', error);
-			new Notice(`An error occurred: ${String(error)}`);
+			new Notice(t('startup.error', { message: String(error) }));
 		}
 	}
 
@@ -460,6 +504,22 @@ export default class TickTickSync extends Plugin {
 			log.error('Auto-cleanup error:', error);
 		}
 	}
+
+	/**
+	 * Whether this database has already completed a full sync at least once.
+	 *
+	 * A first run has no checkpoint, so it must pull everything. Every later
+	 * startup can resume from the delta checkpoint instead of re-downloading the
+	 * entire task list on each launch.
+	 */
+	hasCompletedInitialSync(): boolean {
+		const meta = this.lastSyncMeta;
+		if (!meta) return false;
+		return (meta.lastFullSync ?? 0) > 0 || (meta.lastDeltaSync ?? 0) > 0;
+	}
+
+	/** Snapshot of the sync meta read during `initializePlugin`, used for startup sync decisions. */
+	private lastSyncMeta?: { lastFullSync?: number; lastDeltaSync?: number };
 
 
 	// async oldCheckboxEventhandle(evt: MouseEvent) {
@@ -521,7 +581,7 @@ export default class TickTickSync extends Plugin {
 			result = !!(await this.service.saveProjectsToCache());
 		} catch (error) {
 			log.error(`An error in saveProjectsToCache occurred:( ${String(error)}`);
-			new Notice(`An error in saveProjectsToCache occurred: ${String(error)}`);
+			new Notice(t('sync.databaseCheckError', { message: String(error) }));
 		}
 		const endTime = performance.now();
 		log.debug(`TickTick saveProjectsToCache completed at ${new Date().toLocaleString()}, took ${(endTime - startTime).toFixed(2)} ms`);
@@ -534,7 +594,7 @@ export default class TickTickSync extends Plugin {
 
 		const isSettingsLoaded = await this.loadSettings();
 		if (!isSettingsLoaded) {
-			new Notice('Settings failed to load. Please reload the TickTickSync plugin.');
+			new Notice(t('startup.settingsFailed'));
 			return;
 		}
 		log.setLevel(getSettings().logLevel as 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent')
@@ -542,11 +602,21 @@ export default class TickTickSync extends Plugin {
 
 
 
+		let initialized = false;
 		try {
 			updateSettings({vaultName: this.app.vault.getName()});
-			await this.initializePlugin();
+			initialized = await this.initializePlugin();
 		} catch (error) {
 			log.error('API Initialization Failed.( ' + String(error) + ')');
+		}
+
+		if (initialized) {
+			this.reloadInterval();
+		} else {
+			// Initialization failed (no token, bad credentials, offline first run).
+			// Registering the periodic sync anyway would make every tick fail the
+			// same way; the login flow restarts it once the user is authenticated.
+			log.warn('TickTickSync initialization did not complete: automatic sync stays disabled.');
 		}
 
 		store.service.set(this.service);
@@ -604,16 +674,15 @@ export default class TickTickSync extends Plugin {
 
 
 		this.registerEvents();
-		this.reloadInterval();
 
 		// set default project for TickTick task in the current file
 		// This adds an editor command that can perform some operation on the current editor instance
 		this.addCommand({
 			id: 'tts-default-project-for-file',
-			name: 'Set default ticktick project for current file',
+			name: t('command.setDefaultProject'),
 			editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 				if (!view || !view.file) {
-					new Notice(`No active file.`);
+					new Notice(t('task.noActiveFile'));
 					return;
 				}
 				const filepath = view.file.path;
@@ -622,7 +691,7 @@ export default class TickTickSync extends Plugin {
 		});
 		this.addCommand({
 			id: 'tts-sync',
-			name: 'Synchronize',
+			name: t('command.sync'),
 			callback: async () => {
 				await this.synchronizeNow();
 			}
@@ -630,29 +699,29 @@ export default class TickTickSync extends Plugin {
 
 		this.addCommand({
 			id: 'tts-delete-permanent',
-			name: 'Permanently delete tasks',
+			name: t('command.deletePermanent'),
 			callback: async () => {
 				const deletedTasks = await this.taskRepository.getDeletedTasks();
 				if (deletedTasks.length === 0) {
-					new Notice('No deleted tasks found.');
+					new Notice(t('task.noDeletedFound'));
 					return;
 				}
 				const modal = new CleanupDeletedTasksModal(this.app, deletedTasks);
 				const selected = await modal.showModal();
 				if (selected.length > 0) {
 					await this.taskRepository.hardDeleteTasks(selected);
-					new Notice(`Permanently deleted ${selected.length} task(s).`);
+					new Notice(t('task.permanentlyDeleted', { count: selected.length }));
 				}
 			}
 		});
 
 		this.addCommand({
 			id: 'tts-recover-tasks',
-			name: 'View and recover deleted tasks',
+			name: t('command.recoverTasks'),
 			callback: async () => {
 				const deletedTasks = await this.taskRepository.getDeletedTasks();
 				if (deletedTasks.length === 0) {
-					new Notice('No deleted tasks found.');
+					new Notice(t('task.noDeletedFound'));
 					return;
 				}
 				const modal = new RecoverDeletedTasksModal(this.app, this, deletedTasks);
@@ -667,7 +736,7 @@ export default class TickTickSync extends Plugin {
 
 	private async synchronizeNow() {
 		await this.scheduledSynchronization();
-		new Notice(`Sync completed..`);
+		new Notice(t('sync.completed'));
 	}
 
 	private registerEvents() {
@@ -706,6 +775,18 @@ export default class TickTickSync extends Plugin {
 			// legacy behavior for existing installs.
 			data.stopInjectingTickTickTag = false;
 			data.stripTickTickTagOnReset = false;
+		}
+
+		// New in 2.1.0: startup backups became opt-in (`backupOnStartup`) and
+		// exports are pruned to `backupRetentionCount`. The old `skipBackup`
+		// flag only ever described the previous automatic behaviour, and the
+		// files it produced were never read back by the plugin, so existing
+		// installs default to "no startup backup" and keep the flag ignored.
+		if (data.backupOnStartup === undefined) {
+			data.backupOnStartup = false;
+		}
+		if (data.backupRetentionCount === undefined) {
+			data.backupRetentionCount = DEFAULT_SETTINGS.backupRetentionCount;
 		}
 
 		//Build notable changes from the single source of truth

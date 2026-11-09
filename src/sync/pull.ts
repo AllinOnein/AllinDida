@@ -23,8 +23,13 @@ export async function pullFromTickTick(
 	fullSync = true
 ) {
 
+	// A delta pull must resume from the most recent checkpoint of *either* kind.
+	// After a full sync only `lastFullSync` is advanced, so reading just
+	// `lastDeltaSync` would keep re-downloading everything on every startup.
+	const deltaSince = Math.max(meta.lastFullSync ?? 0, meta.lastDeltaSync ?? 0);
+
 	const { update, delete: deletedIds } = await ticktickRestApi.getUpdatedTasks(
-		fullSync ? 0 : meta.lastDeltaSync
+		fullSync ? 0 : deltaSince
 	);
 
 	let applied = 0;

@@ -51,6 +51,15 @@ async function trackDeviceInSettings(deviceId: string, deviceLabel: string): Pro
 class TickTickDB extends Dexie {
 	tasks!: Table<LocalTask, string>;
 	meta!: Table<MetaRow, "sync">;
+	/**
+	 * Legacy task<->file mapping table.
+	 *
+	 * It is no longer read or written: the `file` field on `LocalTask` is the
+	 * single source of truth for task placement, and `db/mappings.ts` has no
+	 * importers. The store is kept declared here only so that existing
+	 * databases keep opening without a downgrade, and it can be dropped in a
+	 * future schema version.
+	 */
 	mappings!: Table<TaskFileMapping, string>;
 	projects!: Table<LocalProject, string>;
 	projectGroups!: Table<LocalProjectGroup, string>;

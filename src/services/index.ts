@@ -20,6 +20,7 @@ import { db, initDB } from "@/db/dexie";
 import { getAllProjects, getProjectById, upsertProjects } from '@/db/projects';
 import { loadTasksFromCache } from "@/db/tasks";
 import { getAllFiles, getFile, upsertFile } from "@/db/files";
+import { t } from '@/i18n';
 import type { IProject } from '@/api/types/Project';
 
 const LOCK_TASKS = 'LOCK_TASKS';
@@ -65,8 +66,14 @@ export class TickTickService {
 		return false;
 	}
 
-	backup() {
-		void this.tickTickSync?.backupTickTickAllResources();
+	/**
+	 * Take a TickTick data export and write it into the vault.
+	 *
+	 * Resolves when the file is on disk (or after a logged failure), so callers
+	 * can await it to keep it ordered with respect to other vault writes.
+	 */
+	async backup(): Promise<void> {
+		await this.plugin.backupService.backupTickTickData();
 	}
 
 	//MB can be static
@@ -85,7 +92,7 @@ export class TickTickService {
 			let error: { operation: string, statusCode: string, errorMessage: string };
 			if (!result) {
 				error = api.lastError as { operation: string; statusCode: string; errorMessage: string; };
-				const errorString = 'Login Failed. ' + JSON.stringify(error.errorMessage, null, 4);
+				const errorString = t('login.failedShort') + ' ' + JSON.stringify(error.errorMessage, null, 4);
 				new Notice(errorString, 5000);
 				log.error("Login Fail!: ", errorString);
 				throw new Error(error.errorMessage);
@@ -111,13 +118,11 @@ export class TickTickService {
 		try {
 
 			log.debug(`TickTick scheduled synchronization task started at ${new Date().toLocaleString()}`);
-			// NEW: Use TaskCache
-			await this.plugin.taskCache?.fill();
 
 			await doWithLock(LOCK_TASKS, async () => {
 				if (this.plugin.tickTickRestAPI) {
 					const projects = await this.saveProjectsToCache();
-					if (projects) {
+					if (projects && projects.length > 0) {
 						//check to see if we need to move any project files
 						const mostRecentModifiedTime = projects.reduce((latest, project) => {
 							return new Date(project.modifiedTime) > new Date(latest)
@@ -154,8 +159,6 @@ export class TickTickService {
 		} catch (error) {
 			log.error('Error on synchronization: ', error);
 		} finally {
-			// NEW: Clear TaskCache
-			this.plugin.taskCache?.clear();
 			const endTime = performance.now();
 			log.debug(`TickTick scheduled synchronization task completed at ${new Date().toLocaleString()}, took ${(endTime - startTime).toFixed(2)} ms`);
 		}
@@ -330,7 +333,7 @@ export class TickTickService {
 					}
 				}
 
-				new Notice(`File moved to different project group. ${tasks.length} task(s) updated.`);
+				new Notice(t('task.movedToProjectGroup', { count: tasks.length }));
 			}
 
 			//NEW: Use TaskOperationsService
@@ -409,7 +412,7 @@ export class TickTickService {
 
 					// If group lookup failed (expected == base path) and file is in a subfolder,
 					// we can't determine the correct location — skip to avoid pulling files to root
-					const fileFolder = file.path.contains('/') ? file.path.substring(0, file.path.lastIndexOf('/')) : '';
+					const fileFolder = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/')) : '';
 					if (expectedFolderPath === basePath && fileFolder !== basePath) {
 						log.debug(`[checkDB] Skipping ${file.path}: cannot determine project group for ${project.id}`);
 						continue;
@@ -615,7 +618,7 @@ export class TickTickService {
 					log.debug(`Removing DB entry for non-existent file: ${filepath}`);
 					await this.plugin.fileMetadataService.deleteFileMetadata(filepath);
 				}
-				new Notice(`Removed ${deletedFiles.length} non-existent file(s) from the database.`);
+				new Notice(t('task.fileRecordRemoved', { count: deletedFiles.length }));
 			}
 		}
 
@@ -680,7 +683,7 @@ export class TickTickService {
 						}
 					}
 				});
-				new Notice(`Added ${tasksToResolve.length} orphaned task(s) to vault and database.`);
+				new Notice(t('task.orphansAdded', { count: tasksToResolve.length }));
 			} else if (action === 'delete') {
 				await doWithLock(LOCK_TASKS, async () => {
 					for (const t of tasksToResolve) {
@@ -701,7 +704,7 @@ export class TickTickService {
 						}
 					}
 				});
-				new Notice(`Deleted ${tasksToResolve.length} orphaned task(s) from TickTick.`);
+				new Notice(t('task.orphansDeleted', { count: tasksToResolve.length }));
 			}
 		}
 
@@ -711,7 +714,7 @@ export class TickTickService {
 				title: this.plugin.taskParser.stripOBSUrl(t.title),
 				filePath: t.filepath
 			}));
-			const modal = new TaskDeletionModal(this.plugin.app, items, 'they are deleted in TickTick or marked as deleted in the database.', (result) => { });
+			const modal = new TaskDeletionModal(this.plugin.app, items, t('modal.taskDeletion.reasonDeletedInTickTick'), (result) => { });
 			const confirmed = await modal.showModal();
 			log.debug(`[checkDB] User confirmed deletion: ${confirmed}`);
 			if (confirmed) {
@@ -737,7 +740,7 @@ export class TickTickService {
 		}
 
 		await this.plugin.saveSettings();
-		new Notice(`Database check completed.`);
+		new Notice(t('sync.databaseCheckCompleted'));
 		log.debug('Done checking data.');
 	}
 
@@ -837,7 +840,7 @@ export class TickTickService {
 
 				if (!resolved) {
 					log.warn('User cancelled duplicate resolution. Sync aborted.');
-					new Notice('Sync aborted. Please fix duplicates manually in metadata to prevent data corruption.', 10000);
+					new Notice(t('sync.duplicatesAborted'), 10000);
 					return;
 				}
 
@@ -848,7 +851,7 @@ export class TickTickService {
 
 		} catch (error) {
 			log.error(error);
-			new Notice(`Duplicate check failed: ${error instanceof Error ? error.message : String(error)}`, 5000);
+			new Notice(t('sync.duplicateCheckFailed', { message: error instanceof Error ? error.message : String(error) }), 5000);
 			return;
 		}
 
@@ -915,7 +918,7 @@ export class TickTickService {
 					title: this.plugin.taskParser.stripOBSUrl(d.lineTask.title),
 					filePath: d.filepath
 				}));
-				const modal = new TaskDeletionModal(this.plugin.app, items, 'task(s) not found on TickTick', () => { });
+				const modal = new TaskDeletionModal(this.plugin.app, items, t('modal.taskDeletion.reasonNotFound'), () => { });
 				const confirmed = await modal.showModal();
 				if (confirmed) {
 					for (const d of pendingTickTickDeletions) {
@@ -927,7 +930,7 @@ export class TickTickService {
 						}
 					}
 				} else {
-					new Notice('Tasks not found on TickTick will not be deleted.', 5000);
+					new Notice(t('sync.tasksNotFoundNotDeleted'), 5000);
 				}
 			}
 
