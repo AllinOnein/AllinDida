@@ -83,5 +83,11 @@ export const NOTABLE_CHANGES: NotableChange[] = [
 		title: "**Missing project files are re-created on sync** instead of their tasks being deleted (#386)",
 		description: "**Sync checkpoints persist after errors**, and files no longer gain stray blank lines when a sync has nothing to add (#383)\n**Android reminders fixed** — reminder IDs are now generated so reminders sync correctly on mobile\n**Hyphens in tags are handled correctly**\n**Task link setting is honored** when setting the task title during sync\n**Runs alongside other Dexie-based plugins** (e.g. Omnisearch) — no more \"Two different versions of Dexie loaded\" plugin failure\nGeneral stability and performance improvements",
 		anchor: '2.0.15',
+	},
+	{
+		version: '2.1.0',
+		title: '**Chinese localization**, quieter backups, and a lighter startup',
+		description: '**Full Chinese UI** — every dialog, notice, command and setting follows your Obsidian language\n**Startup backups are opt-in** — the extra CSV dump no longer appears in your vault on every launch, and existing backups are pruned to a configurable count\n**Fewer `data.json` rewrites** — settings are only written when they actually change, which stops constant uploads in OneDrive/Dropbox-synced vaults\n**Startup sync is incremental** after the first run instead of re-downloading every task\n**Fixed crashes** in the folder-reorganization path and in the folder picker\n**Backups are written by one implementation** — the duplicated copy was removed',
+		anchor: '2.1.0',
 	}
 ];

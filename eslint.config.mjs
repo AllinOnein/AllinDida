@@ -6,7 +6,8 @@ import obsidianmd from "eslint-plugin-obsidianmd";
 export default defineConfig([
 	...obsidianmd.configs.recommended,
 	{
-		ignores: ["src/zzz_noodling/**", "src/test/**", "main.js"],
+		// `scripts/` holds Node-side build/validation tooling, not plugin code.
+		ignores: ["src/zzz_noodling/**", "src/test/**", "main.js", "scripts/**"],
 	},
 
 	{

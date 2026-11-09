@@ -1,6 +1,6 @@
 {
 	"name": "tickticksync",
-	"version": "2.0.15",
+	"version": "2.1.0",
 	"description": "Sync tasks and notes bidirectionally with TickTick.",
 	"main": "main.js",
 	"scripts": {
@@ -9,6 +9,7 @@
 		"dev": " vite build --mode development --watch",
 		"build": "vite build --mode production",
 		"test": "vitest",
+		"check:i18n": "node scripts/check-i18n.mjs",
 		"sync-changelog": "node sync-notable-changes.mjs",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
@@ -20,14 +21,14 @@
 		"task-management",
 		"TickTick"
 	],
-	"author": "thesamim",
-	"license": "GNU GPLv3",
+	"author": "AllinOnein (fork of thesamim/TickTickSync)",
+	"license": "GPL-3.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/thesamim/TickTickSync.git"
+		"url": "https://github.com/AllinOnein/AllinDida.git"
 	},
 	"bugs": {
-		"url": "https://github.com/thesamim/TickTickSync/issues"
+		"url": "https://github.com/AllinOnein/AllinDida/issues"
 	},
 	"dependencies": {
 		"@types/lowdb": "^1.0.15",
