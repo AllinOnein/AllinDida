@@ -6,31 +6,38 @@ on:
     tags:
       - "*"
 
+# GITHUB_TOKEN 默认是只读的；创建 Release 与上传资产必须显式授予 contents: write，
+# 否则 softprops/action-gh-release 会返回 403。
+permissions:
+  contents: write
+
 env:
-  PLUGIN_NAME: TickTickSync # Change this to match the id of your plugin.
+  PLUGIN_NAME: allindida # 与 manifest.json 的 id 保持一致
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Build
         run: |
-          npm install
           npm run build
-          mkdir ${{ env.PLUGIN_NAME }}
+          mkdir -p ${{ env.PLUGIN_NAME }}
           cp ./dist/main.js ./dist/manifest.json ./dist/styles.css ${{ env.PLUGIN_NAME }}
           zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
-          ls
+          ls -la
 
       - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           tag_name: ${{ github.ref_name }}
