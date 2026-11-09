@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { t } from '@/i18n';
 
 export class CleanupDatabaseModal extends Modal {
 	resolvePromise!: (value: boolean) => void;
@@ -10,9 +11,9 @@ export class CleanupDatabaseModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText('Clean up database');
+		titleEl.setText(t('modal.cleanupDb.title'));
 
-		contentEl.createEl('p', { text: 'The following files are still present in the database but no longer exist in your vault. Remove them from the database?' });
+		contentEl.createEl('p', { text: t('modal.cleanupDb.message') });
 
 		const listEl = contentEl.createDiv({ attr: { style: 'max-height: 400px; overflow-y: auto; margin-bottom: 10px;' } });
 		for (const file of this.files) {
@@ -22,7 +23,7 @@ export class CleanupDatabaseModal extends Modal {
 		new Setting(contentEl)
 			.addButton(cancelBtn => {
 				cancelBtn.setClass('ts_button');
-				cancelBtn.setButtonText('Cancel');
+				cancelBtn.setButtonText(t('modal.cleanupDb.keep'));
 				cancelBtn.onClick(() => {
 					this.resolvePromise(false);
 					this.close();
@@ -31,7 +32,7 @@ export class CleanupDatabaseModal extends Modal {
 			.addButton(confirmBtn => {
 				confirmBtn.setClass('ts_button');
 				confirmBtn.buttonEl.addClass('mod-destructive');
-				confirmBtn.setButtonText(`Clean up database (${this.files.length})`);
+				confirmBtn.setButtonText(`${t('modal.cleanupDb.remove')} (${this.files.length})`);
 				confirmBtn.onClick(() => {
 					this.resolvePromise(true);
 					this.close();

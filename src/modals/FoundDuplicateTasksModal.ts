@@ -4,6 +4,7 @@ import log from '@/utils/logger';
 import type { ITask } from '@/api/types/Task';
 import { db } from "@/db/dexie";
 import { getFile } from "@/db/files";
+import { t } from '@/i18n';
 
 export interface DuplicateSelection {
     taskId: string;
@@ -26,7 +27,7 @@ export class FoundDuplicateTasksModal extends Modal {
         private taskIds: Record<string, string>
     ) {
         super(app);
-        this.titleEl.setText('Duplicate tasks found');
+        this.titleEl.setText(t('modal.duplicateTasks.title'));
 
         // Initialize selections: for each taskId, we have the original file and the duplicate files
         for (const taskId in duplicates) {
@@ -43,7 +44,7 @@ export class FoundDuplicateTasksModal extends Modal {
     async onOpen() {
         const { contentEl, titleEl } = this;
 
-        titleEl.setText('Duplicate tasks found');
+        titleEl.setText(t('modal.duplicateTasks.title'));
 
         // Fetch task titles for all unique task IDs
         const uniqueTaskIds = [...new Set(this.selections.map(s => s.taskId))];
@@ -58,22 +59,22 @@ export class FoundDuplicateTasksModal extends Modal {
         });
 
         contentEl.createEl('p', { 
-            text: 'The following tasks were found in multiple files in your metadata. This causes unpredictable sync results. Select which instances to remove from your files and metadata, or cancel to handle it manually.' 
+            text: t('modal.duplicateTasks.message')
         });
 
         const table = contentEl.createEl('table', { cls: 'projects-table' });
         const thead = table.createEl('thead');
         const headerRow = thead.createEl('tr');
-        headerRow.createEl('th', { text: 'Remove?' });
+        headerRow.createEl('th', { text: t('modal.duplicateTasks.remove') });
 
         const titleHeader = headerRow.createEl('th', { cls: 'tt-sortable-header' });
         titleHeader.addClass('tt-sortable-header');
-        titleHeader.setText('Task title ⇅');
+        titleHeader.setText(`${t('modal.duplicateTasks.taskTitle')} ⇅`);
         titleHeader.addEventListener('click', () => this.sortBy('title', titleHeader));
 
         const fileHeader = headerRow.createEl('th', { cls: 'tt-sortable-header' });
         fileHeader.addClass('tt-sortable-header');
-        fileHeader.setText('File path ⇅');
+        fileHeader.setText(`${t('modal.duplicateTasks.filePath')} ⇅`);
         fileHeader.addEventListener('click', () => this.sortBy('file', fileHeader));
 
         this.tableBody = table.createEl('tbody');
@@ -81,13 +82,13 @@ export class FoundDuplicateTasksModal extends Modal {
 
         new Setting(contentEl)
             .addButton(btn => btn
-                .setButtonText('Cancel & abort sync')
+                .setButtonText(t('modal.duplicateTasks.cancelAbort'))
                 .onClick(() => {
                     this.close();
                     this.resolvePromise(false);
                 }))
             .addButton(btn => btn
-                .setButtonText('Apply & continue sync')
+                .setButtonText(t('modal.duplicateTasks.applyContinue'))
                 .setCta()
                 .onClick(async () => {
                     await this.performDeletions();
@@ -142,7 +143,7 @@ export class FoundDuplicateTasksModal extends Modal {
 
         // Update header text with sort indicator
         const arrow = this.sortDirection === 'asc' ? '↑' : '↓';
-        const label = column === 'title' ? 'Task title' : 'File path';
+        const label = column === 'title' ? t('modal.duplicateTasks.taskTitle') : t('modal.duplicateTasks.filePath');
         headerEl.setText(`${label} ${arrow}`);
 
         this.renderTableRows();

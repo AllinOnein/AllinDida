@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import ResetTasksControl from '@/ui/settings/svelte/ResetTasksControl.svelte';
 	import { settingsStore } from '@/ui/settings/settingsstore';
+	import { t } from '@/i18n';
 
 	export let plugin: TickTickSync;
 
@@ -12,8 +13,8 @@
 	let syncNotes: boolean = false;
 	let resetTasksText: string = '';
 	$: resetTasksText = syncNotes
-		? 'Get all Notes from TickTick?'
-		: 'Remove all Notes from Obsidian? (This will not delete Notes in TickTick)';
+		? t('settings.notes.resetGetNotes')
+		: t('settings.notes.resetRemoveNotes');
 
 	function setIsWorking(value: boolean) {
 		isWorking = value;
@@ -82,8 +83,8 @@
 	<div class="notes-settings ">
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Sync Notes</div>
-				<div class="setting-item-description">Synchronize Notes</div>
+				<div class="setting-item-name">{t('settings.notes.syncName')}</div>
+				<div class="setting-item-description">{t('settings.notes.syncDesc')}</div>
 			</div>
 			<div class="setting-item-control">
 				<label class="checkbox-container" class:is-enabled={syncNotes}>
@@ -100,14 +101,13 @@
 		</div>
 
 		{#if syncNotes}
-			<div>Notes will be synchronized.</div>
+			<div>{t('settings.notes.enabled')}</div>
 			<br>
 			<div class="setting-item delimiter-settings">
 				<div class="setting-item-info">
-					<div class="setting-item-name">Note Delimiter</div>
+					<div class="setting-item-name">{t('settings.notes.delimiterName')}</div>
 					<div class="setting-item-description">
-						Choose how Notes are separated from a Task. <br>Changes will be applied on next update from
-						TickTick.
+						{t('settings.notes.delimiterDesc')}
 					</div>
 				</div>
 
@@ -119,13 +119,13 @@
 						bind:value={delimiterOption}
 						on:change={() => handleOptionChange(delimiterOption)}
 					>
-						<option value="none">No delimiter</option>
-						<option value="custom">Custom</option>
+						<option value="none">{t('settings.notes.noDelimiter')}</option>
+						<option value="custom">{t('settings.notes.custom')}</option>
 					</select>
 					{#if delimiterOption === "custom"}
 						<input
 							type="text"
-							placeholder="Enter delimiter (e.g., ---)"
+							placeholder={t('settings.notes.delimiterPlaceholder')}
 							bind:value={customDelimiter}
 							on:input={handleCustomChange}
 							maxlength={61}
@@ -133,13 +133,13 @@
 						/>
 					{/if}
 					<div class="delimiter-preview">
-						<p>Preview:</p>
+						<p>{t('settings.notes.preview')}</p>
 						<span><pre>{previewExample}</pre></span>
 					</div>
 				</div>
 			</div>
 		{:else }
-			<div>Notes will be not synchronized.</div>
+			<div>{t('settings.notes.disabled')}</div>
 			<br>
 		{/if}
 

@@ -8,6 +8,7 @@ import type { DeletionItem } from './modals/TaskDeletionModal';
 import { TaskDeletionModal } from './modals/TaskDeletionModal';
 import { getProjectById } from '@/db/projects';
 import { db } from '@/db/dexie';
+import { t } from '@/i18n';
 
 export class FileOperation {
 	app: App;
@@ -105,7 +106,7 @@ export class FileOperation {
 		if (fileMap.markAllTasks()) {
 			const newContent = fileMap.getFileLines();
 			await this.app.vault.modify(fileMap.file, newContent);
-			new Notice('New tasks will be added to ticktick on next sync.');
+			new Notice(t('task.newTasksOnNextSync'));
 			// log.error("Modified: ", file?.path, new Date().toISOString());
 		}
 	}
@@ -219,7 +220,7 @@ export class FileOperation {
 				}
 			}
 
-			new Notice(`Creating new file: ${taskFile}`);
+			new Notice(t('file.creating', { path: taskFile }));
 			log.warn(`Creating new file: ${taskFile}`);
 			const whoAdded = `${this.plugin.manifest.name} -- ${this.plugin.manifest.version}`;
 			try {
@@ -335,7 +336,7 @@ export class FileOperation {
 			}));
 			const bConfirm = await this.confirmDeletion(items);
 			if (!bConfirm) {
-				new Notice('Tasks will not be deleted. Please rectify the issue before the next sync.', 5000);
+				new Notice(t('task.willNotBeDeleted'), 5000);
 				return [];
 			}
 		}
@@ -647,7 +648,7 @@ export class FileOperation {
 	}
 
 	private async confirmDeletion(items: DeletionItem[]) {
-		const reason: string = 'task not found in local cache.';
+		const reason: string = t('modal.taskDeletion.reasonNotInCache');
 		const myModal = new TaskDeletionModal(this.app, items, reason, (result) => {
 		});
 		return await myModal.showModal();
@@ -696,16 +697,16 @@ export class FileOperation {
 		if (newTask.projectId != oldTask.projectId) {
 			const newProject = newTask.projectId ? await db.projects.get(newTask.projectId) : undefined;
 			const oldProject = oldTask.projectId ? await db.projects.get(oldTask.projectId) : undefined;
-			const newProjectName = newProject?.project?.name || 'Unknown Project';
-			const oldProjectName = oldProject?.project?.name || 'Unknown Project';
-			message = 'Task Moved.\nTask: ' + cleanTitle + '\nwas moved from\n ' + oldProjectName + '\nto\n' + newProjectName;
+			const newProjectName = newProject?.project?.name || t('common.unknownProject');
+			const oldProjectName = oldProject?.project?.name || t('common.unknownProject');
+			message = t('file.taskMoved', { title: cleanTitle ?? '', from: oldProjectName, to: newProjectName });
 		} else {
 			if (newTask.parentId) {
 				const parentTask = (await this.plugin.taskRepository.loadTaskById(newTask.parentId))!;
 				const cleanParentTaskTitle = this.plugin.taskParser?.stripOBSUrl(parentTask.title);
-				message = 'Task has new Parent.\nTask: ' + cleanTitle + '\nis now a child of\n ' + cleanParentTaskTitle;
+				message = t('file.taskNewParent', { title: cleanTitle ?? '', parent: cleanParentTaskTitle ?? '' });
 			} else {
-				message = 'Task is now a top level task.\nTask: ' + cleanTitle;
+				message = t('file.taskNowTopLevel', { title: cleanTitle ?? '' });
 			}
 		}
 
@@ -768,16 +769,16 @@ export class FileOperation {
 		if (task.projectId != oldProjectId) {
 			const newProject = task.projectId ? await db.projects.get(task.projectId) : undefined;
 			const oldProject = oldProjectId ? await db.projects.get(oldProjectId) : undefined;
-			const newProjectName = newProject?.project?.name || 'Unknown Project';
-			const oldProjectName = oldProject?.project?.name || 'Unknown Project';
-			message = 'Task Moved.\nTask: ' + cleanTitle + '\nwas moved from\n ' + oldProjectName + '\nto\n' + newProjectName;
+			const newProjectName = newProject?.project?.name || t('common.unknownProject');
+			const oldProjectName = oldProject?.project?.name || t('common.unknownProject');
+			message = t('file.taskMoved', { title: cleanTitle ?? '', from: oldProjectName, to: newProjectName });
 		} else {
 			if (task.parentId) {
 				const parentTask = (await this.plugin.taskRepository.loadTaskById(task.parentId))!;
 				const cleanParentTaskTitle = this.plugin.taskParser?.stripOBSUrl(parentTask.title);
-				message = 'Task has new Parent.\nTask: ' + cleanTitle + '\nis now a child of\n ' + cleanParentTaskTitle;
+				message = t('file.taskNewParent', { title: cleanTitle ?? '', parent: cleanParentTaskTitle ?? '' });
 			} else {
-				message = 'Task is now a top level task.\nTask: ' + cleanTitle;
+				message = t('file.taskNowTopLevel', { title: cleanTitle ?? '' });
 			}
 		}
 
@@ -952,7 +953,7 @@ export class FileOperation {
 					//This happened once. It caused an infinite loop. Throw an error.
 					if (level > 6) {
 						log.debug('this is the issue: ', currentId, ' ', taskMap[currentId].parentId, '');
-						new Notice('A circular parent-child dependency was found. Please fix in ticktick by checking parent-child relationships.');
+						new Notice(t('task.circularDependency'));
 						throw new Error('Circular parent-child dependency was found.');
 					}
 					currentId = taskMap[currentId].parentId;

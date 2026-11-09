@@ -5,9 +5,24 @@
 	import { Notice } from 'obsidian';
 	import { TAGS_BEHAVIOR } from '@/ui/settings/svelte/constants.svelte.js';
 	import { settingsStore } from '@/ui/settings/settingsstore';
+	import { t } from '@/i18n';
 
 	export let open = false;
 	export let plugin;
+
+	/**
+	 * 说明文字里有加粗标记，因此走 {@html}。项目名/标签是用户与滴答清单
+	 * 提供的任意字符串，必须转义后再插入，否则会构成 HTML 注入。
+	 */
+	function escapeForHtml(value: string | undefined): string {
+		if (!value) return '';
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
 
 	let projects: Array<{ id: string; name: string }> = [];
 	let myProjectsOptions: Record<string, string> = {};
@@ -46,9 +61,7 @@
 			(obj: any) => obj.defaultProjectId === value
 		);
 		if (!defaultProjectFileEntry) {
-			const noticeMsg = `Did not find a default Project File for Project ${
-				myProjectsOptions?.[value]
-			}. Please create a file and set its default to this project, or select a file to be the default for this project.`;
+			const noticeMsg = t('settings.limit.noDefaultFile', { project: myProjectsOptions?.[value] ?? '' });
 			new Notice(noticeMsg, 5000);
 		}
 		await plugin.saveSettings();
@@ -98,22 +111,19 @@
 </script>
 
 <CollapsibleSection
-	title="Limit synchronization"
-	shortDesc="Synchronization settings added for effect"
+	title={t('settings.limit.title')}
+	shortDesc={t('settings.limit.shortDesc')}
 	open={open}
 	on:headerClick={handleHeaderClick}
 >
 	<div class="setting-item-description">
-		To limit the tasks TickTickSync will synchronize from TickTick to
-		Obsidian select a tag and/or project(list) below. If a tag is entered, only tasks with that tag will be
-		synchronized. If a project(list) is selected, only tasks in that project will be synchronized. If
-		both are chosen the behavior will be determined by your settings. See result below.
+		{t('settings.limit.desc')}
 	</div>
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Project</div>
-			<div class="setting-item-description">Only tasks in this project will be synchronized.</div>
+			<div class="setting-item-name">{t('settings.limit.projectName')}</div>
+			<div class="setting-item-description">{t('settings.limit.projectDesc')}</div>
 		</div>
 		<div class="setting-item-control">
 			<select
@@ -124,7 +134,7 @@
 				handleSyncProjectChange((e.target as HTMLSelectElement).value);
 				updateSyncExplanationData(myProjectsOptions);}}
 			>
-				<option value="">(none)</option>
+				<option value="">{t('common.none')}</option>
 				{#each Object.entries(myProjectsOptions) as [id, name]}
 					<option value={id}>{name}</option>
 				{/each}
@@ -133,8 +143,8 @@
 	</div>
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Tag Behavior</div>
-			<div class="setting-item-description">Determine how Tags will be handled.</div>
+			<div class="setting-item-name">{t('settings.limit.tagBehaviorName')}</div>
+			<div class="setting-item-description">{t('settings.limit.tagBehaviorDesc')}</div>
 		</div>
 		<div class="setting-item-control">
 			<select
@@ -154,15 +164,15 @@
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Tag</div>
-			<div class="setting-item-description">Tag value, no "#".</div>
+			<div class="setting-item-name">{t('settings.limit.tagName')}</div>
+			<div class="setting-item-description">{t('settings.limit.tagDesc')}</div>
 		</div>
 		<div class="setting-item-control">
 			<input
 				id="sync-tag"
 				type="text"
 				bind:value={syncTag}
-				placeholder="Only tasks with this tag will be synced"
+				placeholder={t('settings.limit.tagPlaceholder')}
 				on:input={(e: Event) => {
 					handleSyncTagChange((e.target as HTMLInputElement).value);
 					updateSyncExplanationData(myProjectsOptions);}}
@@ -172,20 +182,24 @@
 	<!-- In your relevant markup location: -->
 	<div class="sync-explanation">
 		{#if !syncExplanationData.project && !syncExplanationData.tag}
-			<p>No limitation.</p>
+			<p>{t('settings.limit.noLimit')}</p>
 		{:else if syncExplanationData.project && !syncExplanationData.tag}
-			<p>Only Tasks in <b>{syncExplanationData.project}</b> will be synchronized</p>
+			<p>{@html t('settings.limit.onlyProject', { project: escapeForHtml(syncExplanationData.project) })}</p>
 		{:else if !syncExplanationData.project && syncExplanationData.tag}
-			<p>Only Tasks tagged with <b>#{syncExplanationData.tag}</b> tag will be synchronized</p>
+			<p>{@html t('settings.limit.onlyTag', { tag: escapeForHtml(syncExplanationData.tag) })}</p>
 		{:else if syncExplanationData.andOr}
 			<p>
-				Only tasks in <b>{syncExplanationData.project}</b> AND tagged with <b>#{syncExplanationData.tag}</b> tag
-				will be synchronized
+				{@html t('settings.limit.projectAndTag', {
+					project: escapeForHtml(syncExplanationData.project!),
+					tag: escapeForHtml(syncExplanationData.tag!),
+				})}
 			</p>
 		{:else}
 			<p>
-				All tasks in <b>{syncExplanationData.project}</b> will be synchronized. All tasks tagged with
-				<b>#{syncExplanationData.tag}</b> tag will be synchronized
+				{@html t('settings.limit.projectOrTag', {
+					project: escapeForHtml(syncExplanationData.project!),
+					tag: escapeForHtml(syncExplanationData.tag!),
+				})}
 			</p>
 		{/if}
 	</div>

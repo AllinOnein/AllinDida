@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resetTasks } from '@/ui/settings/utils/ResetSynchronization';
+	import { t } from '@/i18n';
 	export let isWorking: boolean;
 	export let resetTasksText: string;
 	export let plugin;
@@ -28,12 +29,12 @@
 
 <div class="setting-item">
 	<div class="setting-item-info">
-		<div class="setting-item-name">Reset Tasks</div>
+		<div class="setting-item-name">{t('settings.reset.button')}</div>
 		<div class="setting-item-description">
-			Do you want to {resetTasksText}
+			{t('settings.reset.question', { action: resetTasksText })}
 			<br>
 			<em>
-				Caution: This will take some time and update Tasks from TickTick to Obsidian and Obsidian to TickTick.
+				{t('settings.reset.caution')}
 			</em>
 		</div>
 	</div>
@@ -42,7 +43,7 @@
 			disabled={isWorking}
 			class="mod-cta"
 			on:click={onReset}>
-			Reset Tasks.
+			{t('settings.reset.button')}
 		</button>
 	</div>
 </div>
@@ -54,7 +55,7 @@
 		tabindex="0"
 		on:click={modalWorking ? undefined : closeModal}
 		on:keydown={(e) => { if (!modalWorking && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); closeModal(); } }}
-		aria-label="Close"
+		aria-label={t('common.close')}
 		style={modalWorking ? 'cursor: wait;' : ''}
 	></div>
 	<div
@@ -64,21 +65,21 @@
 		style={modalWorking ? 'cursor: wait;' : ''}
 	>
 		<div class="local-modal-content">
-			<h2>Confirm Reset</h2>
-			<p>Do you <strong>REALLY</strong> want to {resetTasksText}?</p>
-			<p style="color:var(--text-warning);"><em>This will sync everything and can take a while.</em></p>
+			<h2>{t('settings.reset.confirmTitle')}</h2>
+			<p>{t('settings.reset.reallyConfirmPrefix')} <strong>{t('settings.reset.really')}</strong> {t('settings.reset.confirmSuffix', { action: resetTasksText })}</p>
+			<p style="color:var(--text-warning);"><em>{t('settings.reset.warning')}</em></p>
 			<div class="local-modal-actions">
 				<button class="mod-cta"
 					on:click={confirmReset}
 					disabled={modalWorking}>
-					{modalWorking ? 'Resetting...' : 'Yes, reset'}
+					{modalWorking ? t('settings.reset.working') : t('settings.reset.yes')}
 				</button>
 				<button
 					style="margin-left:1em;"
 					on:click={closeModal}
 					disabled={modalWorking}
 				>
-					No, cancel
+					{t('settings.reset.no')}
 				</button>
 			</div>
 		</div>

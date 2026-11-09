@@ -4,6 +4,7 @@
  */
 
 import { App, Notice } from 'obsidian';
+import { t } from '@/i18n';
 import { db } from '@/db/dexie';
 import { FolderSyncService } from '@/services/FolderSyncService';
 import { getSettings } from '@/settings';
@@ -32,14 +33,14 @@ export class FolderMigrationService {
 		}
 
 		log.info('Starting file reorganization into folders...');
-		new Notice('Organizing task files into folders...');
+		new Notice(t('reorganize.starting'));
 
 		try {
 			const filesToMove = await this.identifyFilesToMove();
 			
 			if (filesToMove.size === 0) {
 				log.info('No files need to be moved');
-				new Notice('All files are already organized');
+				new Notice(t('reorganize.alreadyOrganized'));
 				return 0;
 			}
 
@@ -70,18 +71,17 @@ export class FolderMigrationService {
 				}
 			}
 
-			const message = `Reorganization complete: ${successCount} files moved`;
 			if (errorCount > 0) {
-				new Notice(`${message}, ${errorCount} errors (see console)`);
+				new Notice(t('reorganize.completeWithErrors', { count: successCount, errors: errorCount }));
 			} else {
-				new Notice(message);
+				new Notice(t('reorganize.complete', { count: successCount }));
 			}
 
 			log.info(`File reorganization complete: ${successCount} moved, ${errorCount} errors`);
 			return successCount;
 		} catch (error) {
 			log.error('Error during file reorganization:', error);
-			new Notice(`Error organizing files: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			new Notice(t('reorganize.error', { message: error instanceof Error ? error.message : t('common.unknown') }));
 			return 0;
 		}
 	}

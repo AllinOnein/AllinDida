@@ -12,6 +12,7 @@ import { getSettings } from '@/settings';
 import { TaskDeletionModal } from '@/modals/TaskDeletionModal';
 import { FolderSyncService } from '@/services/FolderSyncService';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 
 export class VaultSyncCoordinator {
 	private app: App;
@@ -281,13 +282,13 @@ export class VaultSyncCoordinator {
 		const modal = new TaskDeletionModal(
 			this.app,
 			items,
-			'tasks deleted from TickTick',
+			t('modal.taskDeletion.reasonDeletedFromTickTick'),
 			() => {}
 		);
 		const confirmed = await modal.showModal();
 
 		if (!confirmed) {
-			new Notice('Tasks will not be deleted from vault.', 5000);
+			new Notice(t('task.removedFromVault'), 5000);
 		}
 
 		return confirmed;

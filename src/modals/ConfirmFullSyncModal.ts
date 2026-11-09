@@ -1,16 +1,8 @@
 import { App, Modal, Setting } from 'obsidian';
+import { t } from '@/i18n';
 
 
 export class ConfirmFullSyncModal extends Modal {
-	title = 'Full Vault Task Sync Confirmation';
-	message = 'Are you sure you want to Sync ALL tasks? \n' +
-		'Indented Tasks created in Obsidian will be created as subtasks in TickTick\n ' +
-		'Task Items created in TickTick will still be Task Items. This is the only way to create Task Items when Full Vault Sync is enabled.\n' +
-		'Tasks that are currently "Items" of tasks MAY be ' +
-		'converted to "Sub Tasks" of the containing Tasks.\n' +
-		'The "Items" will not be deleted.\nPlease proceed with Caution.';
-	cancelLabel = 'Cancel';
-	confirmLabel = 'Confirm Full Vault Task Sync';
 	result: boolean = false;
 	onSubmit: (result: boolean) => void;
 	resolvePromise!: (value: (PromiseLike<boolean> | boolean)) => void;
@@ -26,15 +18,19 @@ export class ConfirmFullSyncModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText(this.title);
-		const arrMessage = this.message.split('\n');
-		arrMessage.forEach(message => {
-		contentEl.createEl('p', { text: message });
-		})
+		titleEl.setText(t('modal.fullVaultSync.title'));
+
+		// 每个段落单独成行，与原文的换行排版保持一致。
+		const paragraphs = t('modal.fullVaultSync.message').split('\n');
+		paragraphs.forEach(message => {
+			if (message.trim().length > 0) {
+				contentEl.createEl('p', { text: message });
+			}
+		});
 
 		new Setting(contentEl).addButton(cancelBtn => {
 			cancelBtn.setClass('ts_button');
-			cancelBtn.setButtonText(this.cancelLabel);
+			cancelBtn.setButtonText(t('common.cancel'));
 				cancelBtn.onClick(() => {
 					this.result = false;
 					this.onSubmit(this.result);
@@ -44,7 +40,7 @@ export class ConfirmFullSyncModal extends Modal {
 			.addButton(confirmBtn => {
 				confirmBtn.setClass('ts_button');
 				confirmBtn.buttonEl.addClass('mod-destructive');
-				confirmBtn.setButtonText(this.confirmLabel);
+				confirmBtn.setButtonText(t('modal.fullVaultSync.confirm'));
 				confirmBtn.onClick(() => {
 					this.result = true;
 					this.onSubmit(this.result);

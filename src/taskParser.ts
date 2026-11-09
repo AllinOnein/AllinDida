@@ -9,6 +9,7 @@ import type { TagService } from '@/services/TagService';
 import { tasksTextToRRule, rruleToTasksText } from '@/utils/RecurrenceConverter';
 import { normalizeTrigger, parseReminderText, secondsToShorthand, triggerToSeconds } from '@/utils/ReminderConverter';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 
 const prioritySymbols = {
 	Highest: '🔺', High: '⏫', Medium: '🔼', Low: '🔽', Lowest: '⏬', None: ''
@@ -925,7 +926,7 @@ export class TaskParser {
 				} else {
 					log.debug('Task file does not have a default project: ', taskFile);
 					//hate to do a notification from here, but I don't want to blindside them either.
-					new Notice(`Task ${TickTickTask.title} was moved in TickTick, but is in ${taskFile}. Assuming that this is intentional and not moving it.`, 10000	);
+					new Notice(t('task.movedElsewhereInTickTick', { title: TickTickTask.title, file: taskFile }), 10000);
 
 					return false;
 				}

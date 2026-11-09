@@ -16,6 +16,7 @@ import { FileTaskQueries } from '@/repositories/FileTaskQueries';
 import { TaskDeletionModal } from '@/modals/TaskDeletionModal';
 import { getSettings } from '@/settings';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 
 export class TaskDeletionHandler {
 	private app: App;
@@ -223,9 +224,9 @@ export class TaskDeletionHandler {
 		}
 
 		// Get confirmation from user
-		const confirmed = await this.confirmDeletion(taskIds, 'The tasks were removed from the file');
+		const confirmed = await this.confirmDeletion(taskIds, t('modal.taskDeletion.reasonRemovedFromFile'));
 		if (!confirmed) {
-			new Notice('Tasks will not be deleted. Please rectify the issue before the next sync.', 5000);
+			new Notice(t('task.willNotBeDeleted'), 5000);
 			return [];
 		}
 
@@ -240,7 +241,7 @@ export class TaskDeletionHandler {
 				if (projectId) {
 					const response = await this.plugin.tickTickRestAPI?.deleteTask(taskId, projectId);
 					if (response) {
-						new Notice(`Task ${taskId} deleted`);
+						new Notice(t('task.deleted', { taskId }));
 					}
 				}
 

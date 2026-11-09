@@ -1,10 +1,8 @@
 import { App, Component, MarkdownRenderer, Modal, Setting } from 'obsidian';
+import { t } from '@/i18n';
 
 
 export class LatestChangesModal extends Modal {
-	title = 'TicTickSync -- Latest Changes.';
-	cancelLabel = 'Cancel';
-	confirmLabel = 'Got it.';
 	message = '';
 	result = false;
 	notableChanges: string[][];
@@ -25,34 +23,28 @@ export class LatestChangesModal extends Modal {
 	onOpen() {
 		this.renderComponent = new Component();
 		this.renderComponent.load();
-		const notableChangesURL = 'https://thesamim.github.io/TickTickSync/changelog/#';
 		let { titleEl, contentEl } = this;
-		titleEl.setText(this.title);
+		titleEl.setText(t('modal.latestChanges.title'));
 
-		let tipEl = contentEl.createDiv({ cls: 'callout', attr: { 'data-callout': 'tip' } });
+		// 这里是衍生版本：不再展示原作者的赞助入口，改为说明本项目来源。
+		let tipEl = contentEl.createDiv({ cls: 'callout', attr: { 'data-callout': 'info' } });
 		let calloutTitle = tipEl.createDiv({ cls: 'callout-title' });
 		calloutTitle.createDiv({ cls: 'callout-icon' });
-		calloutTitle.createDiv({ cls: 'callout-title-inner', text: 'If TickTickSync provides value.' });
+		calloutTitle.createDiv({ cls: 'callout-title-inner', text: t('modal.latestChanges.forkTitle') });
 		let calloutContent = tipEl.createDiv({ cls: 'callout-content' });
 		let p = calloutContent.createEl('p');
-		let a = p.createEl('a', { href: 'https://ko-fi.com/O0C12398ZK', attr: { target: '_blank' } });
-		a.createEl('img', { attr: {
-			height: '36',
-			style: 'border:0px;height:36px;',
-			src: 'https://storage.ko-fi.com/cdn/kofi6.png?v=6',
-			border: '0',
-			alt: 'Buy Me a Coffee at ko-fi.com',
-		}});
+		p.setText(t('modal.latestChanges.forkNotice'));
 
 		let p1 = contentEl.createEl('p');
-		p1.setText('The following are user experience affecting changes from prior versions of TickTickSync.');
+		p1.setText(t('modal.latestChanges.intro'));
 		let p2 = contentEl.createEl('p');
-		p2.createEl('strong', { text: 'Strongly' });
-		p2.appendText(' recommend that you take a backup ASAP.');
+		p2.createEl('strong', { text: t('modal.latestChanges.strongly') });
+		p2.appendText(t('modal.latestChanges.backupAdvice'));
 		let changesText = contentEl.createEl('ol');
+		// 本仓库没有搭建文档站：只展示变更标题，不再外链到原作者的英文文档。
 		this.notableChanges.forEach(notableChange => {
 			let lineItem = changesText.createEl('li');
-			void MarkdownRenderer.render(this.app, `[${notableChange[0]}](<${notableChangesURL}${notableChange[2]}>)`, lineItem, '', this.renderComponent);
+			lineItem.createEl('strong', { text: notableChange[0] });
 			let holder = lineItem.createEl('ol');
 			const changeLines = notableChange[1].split('\n');
 			changeLines.forEach(line => {
@@ -65,7 +57,7 @@ export class LatestChangesModal extends Modal {
 			.addButton(confirmBtn => {
 				confirmBtn.setClass('ts_button');
 				confirmBtn.buttonEl.addClass('mod-destructive');
-				confirmBtn.setButtonText(this.confirmLabel);
+				confirmBtn.setButtonText(t('modal.latestChanges.gotIt'));
 				confirmBtn.onClick(() => {
 					this.result = true;
 					this.onSubmit(this.result);

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CollapsibleSection from '@/ui/settings/svelte/sections/CollapsibleSection.svelte';
+	import { t } from '@/i18n';
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { getSettings, updateSettings, mergeDeviceLists } from '@/settings';
 	import { getCurrentDeviceInfo, setCurrentDeviceInfo } from '@/db/device';
@@ -97,23 +98,23 @@
 </script>
 
 <CollapsibleSection
-	title="Device Identity"
-	shortDesc="Device Identity"
+	title={t('settings.device.name')}
+	shortDesc={t('settings.device.name')}
 	open={open}
 	on:headerClick={handleHeaderClick}
 >
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Current Device</div>
+			<div class="setting-item-name">{t('settings.device.current')}</div>
 			<div class="setting-item-description">
-				This device's identity
+				{t('settings.device.currentDesc')}
 			</div>
 		</div>
 		<div class="setting-item-control">
 			<div style="display: flex; flex-direction: column; gap: 0.5em;">
 				<div style="display: flex; align-items: center; gap: 0.5em;">
-					<strong>Label:</strong>
+					<strong>{t('settings.device.label')}:</strong>
 					{#if isEditingLabel}
 						<input
 							type="text"
@@ -127,28 +128,28 @@
 							on:click={saveDeviceLabel}
 							style="padding: 0.25em 0.5em;"
 						>
-							Save
+							{t('common.save')}
 						</button>
 						<button
 							on:click={cancelEditingLabel}
 							style="padding: 0.25em 0.5em;"
 						>
-							Cancel
+							{t('common.cancel')}
 						</button>
 					{:else}
-						<span>{currentDevice?.deviceLabel || 'Unknown'}</span>
+						<span>{currentDevice?.deviceLabel || t('common.unknown')}</span>
 						<button
 							on:click={startEditingLabel}
 							class="clickable-icon"
 							style="padding: 0.25em 0.5em;"
-							aria-label="Edit device label"
+							aria-label={t('settings.device.editLabel')}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
 						</button>
 					{/if}
 				</div>
 				<div style="font-family: monospace; font-size: 0.9em; color: var(--text-muted);">
-					<strong>ID:</strong> {currentDevice?.deviceId || 'Unknown'}
+					<strong>ID:</strong> {currentDevice?.deviceId || t('common.unknown')}
 				</div>
 			</div>
 		</div>
@@ -156,15 +157,15 @@
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Known Devices</div>
+			<div class="setting-item-name">{t('settings.device.knownDevices')}</div>
 			<div class="setting-item-description">
-				All devices that have been used with this vault.
+				{t('settings.device.knownDevicesDesc')}
 			</div>
 		</div>
 		<div class="setting-item-control">
 			{#if devices.length === 0}
 				<div style="color: var(--text-muted); font-style: italic;">
-					No devices tracked yet
+					{t('settings.device.noDevices')}
 				</div>
 			{:else}
 				<div style="display: flex; flex-direction: column; gap: 0.5em;">
@@ -173,7 +174,7 @@
 							<div>
 								<strong>{device.deviceLabel}</strong>
 								{#if currentDevice && device.deviceId === currentDevice.deviceId}
-									<span style="color: var(--text-accent); font-size: 0.9em;">(current)</span>
+									<span style="color: var(--text-accent); font-size: 0.9em;">{t('settings.device.currentTag')}</span>
 								{/if}
 							</div>
 							<div style="font-family: monospace; font-size: 0.85em; color: var(--text-muted);">

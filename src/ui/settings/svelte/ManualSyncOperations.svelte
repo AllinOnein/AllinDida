@@ -6,6 +6,7 @@
 	import { FolderSuggest } from '@/utils/FolderSuggester';
 	import { onMount } from 'svelte';
 	import { validateNewFolder } from '@/utils/FolderUtils';
+	import { t } from '@/i18n';
 
 	export let plugin: TickTickSync;
 
@@ -14,14 +15,14 @@
 
 	async function handleManualSync() {
 		if (!getSettings().token) {
-			new Notice('Please log in from settings first');
+			new Notice(t('startup.pleaseLogin'));
 			return;
 		}
 		try {
 			await plugin.scheduledSynchronization();
-			new Notice('Sync completed.');
+			new Notice(t('sync.completed'));
 		} catch (error) {
-			new Notice(`An error occurred while syncing: ${error}`);
+			new Notice(t('sync.error', { message: String(error) }));
 		}
 	}
 
@@ -30,7 +31,7 @@
 	function searchFolder(element: HTMLElement) {
 		const setting = new Setting(element)
 			.addSearch((search) => {
-				search.setPlaceholder('Select or Create folder')
+				search.setPlaceholder(t('settings.manual.selectFolder'))
 					.setValue(getSettings().bkupFolder);
 				search.setValue(folderOptions[getSettings().bkupFolder]);
 				new FolderSuggest(search.inputEl, plugin.app);
@@ -38,7 +39,7 @@
 					if (debounceTimeout) clearTimeout(debounceTimeout);
 
 					debounceTimeout = setTimeout(async () => {
-						const newFolder = await validateNewFolder(plugin.app, value, "Backup");
+						const newFolder = await validateNewFolder(plugin.app, value, t('folder.typeBackup'));
 						if (newFolder) {
 							updateSettings({ bkupFolder: newFolder });
 							await plugin.saveSettings();
@@ -81,21 +82,21 @@
 	{#if getSettings().token}
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Manual sync</div>
-				<div class="setting-item-description">Manually perform a synchronization task</div>
+				<div class="setting-item-name">{t('settings.manual.syncName')}</div>
+				<div class="setting-item-description">{t('settings.manual.syncDesc')}</div>
 			</div>
 			<div class="setting-item-control">
 				<button class="mod-cta" on:click={handleManualSync} disabled={isCheckingDatabase}>
-					Sync
+					{t('settings.manual.syncButton')}
 				</button>
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Check database</div>
+				<div class="setting-item-name">{t('settings.manual.checkDbName')}</div>
 				<div class="setting-item-description">
-					Check for possible issues: sync error, file renaming not updated, or missed tasks not synchronized
+					{t('settings.manual.checkDbDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">
@@ -103,51 +104,74 @@
 					class="mod-cta"
 					on:click={handleCheckDatabase}
 					disabled={isCheckingDatabase}>
-					{isCheckingDatabase ? 'Checking...' : 'Check Database'}
+					{isCheckingDatabase ? t('settings.manual.checking') : t('settings.manual.checkDbButton')}
 				</button>
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Backup TickTick data</div>
+				<div class="setting-item-name">{t('settings.manual.backupName')}</div>
 				<div class="setting-item-description">
-					Click to backup TickTick data. The backed-up files will be stored in the selected directory of the
-					Obsidian vault
+					{t('settings.manual.backupDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">
 				<button
 					class="mod-cta"
-					on:click={() => plugin.service.backup()}
+					on:click={async () => { await plugin.service.backup(); }}
 					disabled={isCheckingDatabase}>
-					Backup
+					{t('settings.manual.backupButton')}
 				</button>
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Skip backup</div>
-				<div class="setting-item-description">Skip backup on startup</div>
+				<div class="setting-item-name">{t('settings.manual.backupOnStartupName')}</div>
+				<div class="setting-item-description">
+					{t('settings.manual.backupOnStartupDesc')}
+				</div>
 			</div>
 			<div class="setting-item-control">
-				<label class="checkbox-container" class:is-enabled={$settingsStore.skipBackup}>
+				<label class="checkbox-container" class:is-enabled={$settingsStore.backupOnStartup}>
 					<input
 						type="checkbox"
-						checked={$settingsStore.skipBackup}
+						checked={$settingsStore.backupOnStartup}
 						on:change={async (e) => {
-							updateSettings({ skipBackup: (e.target as HTMLInputElement).checked });
+							updateSettings({ backupOnStartup: (e.target as HTMLInputElement).checked });
 							await plugin.saveSettings();
 						}}
 					/>
 				</label>
 			</div>
 		</div>
+
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Backup folder</div>
-				<div class="setting-item-description">Choose the folder to store the backup files.</div>
+				<div class="setting-item-name">{t('settings.manual.retentionName')}</div>
+				<div class="setting-item-description">
+					{t('settings.manual.retentionDesc')}
+				</div>
+			</div>
+			<div class="TTS-setting-item-control">
+				<input
+					type="number"
+					min="1"
+					max="20"
+					value={getSettings().backupRetentionCount}
+					on:change={async (e) => {
+						const val = Math.min(20, Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 3));
+						updateSettings({ backupRetentionCount: val });
+						await plugin.saveSettings();
+					}}
+				/>
+			</div>
+		</div>
+		<div class="setting-item">
+			<div class="setting-item-info">
+				<div class="setting-item-name">{t('settings.manual.backupFolderName')}</div>
+				<div class="setting-item-description">{t('settings.manual.backupFolderDesc')}</div>
 			</div>
 			<div class="setting-item-control flex-container">
 				<div
@@ -161,54 +185,54 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Permanently delete deleted tasks</div>
-				<div class="setting-item-description">View and permanently remove deleted task records from the database</div>
+				<div class="setting-item-name">{t('settings.manual.purgeName')}</div>
+				<div class="setting-item-description">{t('settings.manual.purgeDesc')}</div>
 			</div>
 			<div class="setting-item-control">
 				<button class="mod-cta" on:click={async () => {
 					const { CleanupDeletedTasksModal } = await import('@/modals/CleanupDeletedTasksModal');
 					const deletedTasks = await plugin.taskRepository.getDeletedTasks();
 					if (deletedTasks.length === 0) {
-						new Notice('No deleted tasks found.');
+						new Notice(t('task.noDeletedFound'));
 						return;
 					}
 					const modal = new CleanupDeletedTasksModal(plugin.app, deletedTasks);
 					const selected = await modal.showModal();
 					if (selected.length > 0) {
 						await plugin.taskRepository.hardDeleteTasks(selected);
-						new Notice(`Permanently deleted ${selected.length} task(s).`);
+						new Notice(t('task.permanentlyDeleted', { count: selected.length }));
 					}
 				}} disabled={isCheckingDatabase}>
-					Manage Deleted Tasks
+					{t('settings.manual.purgeButton')}
 				</button>
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Recover deleted tasks</div>
-				<div class="setting-item-description">View and restore deleted tasks back to their original or a different file</div>
+				<div class="setting-item-name">{t('settings.manual.recoverName')}</div>
+				<div class="setting-item-description">{t('settings.manual.recoverDesc')}</div>
 			</div>
 			<div class="setting-item-control">
 				<button class="mod-cta" on:click={async () => {
 					const { RecoverDeletedTasksModal } = await import('@/modals/RecoverDeletedTasksModal');
 					const deletedTasks = await plugin.taskRepository.getDeletedTasks();
 					if (deletedTasks.length === 0) {
-						new Notice('No deleted tasks found.');
+						new Notice(t('task.noDeletedFound'));
 						return;
 					}
 					const modal = new RecoverDeletedTasksModal(plugin.app, plugin, deletedTasks);
 					await modal.showModal();
 				}} disabled={isCheckingDatabase}>
-					Recover Deleted Tasks
+					{t('settings.manual.recoverButton')}
 				</button>
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Deleted Task Retention</div>
-				<div class="setting-item-description">Days to keep deleted tasks before auto-purge (1–31)</div>
+				<div class="setting-item-name">{t('settings.manual.retentionDaysName')}</div>
+				<div class="setting-item-description">{t('settings.manual.retentionDaysDesc')}</div>
 			</div>
 			<div class="TTS-setting-item-control">
 				<input

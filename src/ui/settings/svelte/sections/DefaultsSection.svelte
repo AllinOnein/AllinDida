@@ -9,9 +9,21 @@
 	import { NewFileMap } from '@/services/NewFileMap';
 	import { db } from '@/db/dexie';
 	import type TickTickSync from '@/main';
+	import { t } from '@/i18n';
 
 	export let open = false;
 	export let plugin: TickTickSync;
+
+	/** 项目名等是外部字符串，插入 {@html} 前必须转义。 */
+	function escapeForHtml(value: string | undefined): string {
+		if (!value) return '';
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
 	let defaultProjectId = '';
 	let currentDefault: string;
 	let showUpdateWorldModal = false;
@@ -60,7 +72,7 @@
 							await plugin.app.vault.rename(file, newPath);
 						} catch (error) {
 							log.error(`File rename failed. ${error}`);
-							alert(`File rename failed. ${error}`);
+							alert(t('file.renameFailed', { message: String(error) }));
 						}
 					} else {
 						log.debug('default project file already at correct path', newPath);
@@ -74,7 +86,7 @@
 	function defaultFolder(element: HTMLElement) {
 		const setting = new Setting(element)
 			.addSearch((search) => {
-				search.setPlaceholder('Select or Create folder')
+				search.setPlaceholder(t('settings.manual.selectFolder'))
 					.setValue(getDefaultFolder());
 				new FolderSuggest(search.inputEl, plugin.app);
 
@@ -90,7 +102,7 @@
 				search.inputEl.addEventListener('keydown', async (e: KeyboardEvent) => {
 					if (e.key === 'Enter') {
 						const value = search.inputEl.value;
-						const newFolder = await validateNewFolder(plugin.app, value, 'Default');
+						const newFolder = await validateNewFolder(plugin.app, value, t('folder.typeDefault'));
 						if (newFolder) {
 							updateSettings({ TickTickTasksFilePath: newFolder });
 							await ensureCorrectDefaultPaths();
@@ -115,7 +127,7 @@
 			value = getSettings().inboxID;
 		}
 		if (value && value !== '') {
-			updateSettings({ defaultProjectName: (await db.projects.get(value))?.project?.name ?? 'Unknown' });
+			updateSettings({ defaultProjectName: (await db.projects.get(value))?.project?.name ?? t('common.unknown') });
 			updateSettings({ defaultProjectId: value });
 			await ensureCorrectDefaultPaths();
 			await plugin.saveSettings();
@@ -185,7 +197,7 @@
 				}
 			} catch (error) {
 				log.error(`[moveFiles] File rename failed. ${error}`);
-				alert(`File rename failed. ${error}`);
+				alert(t('file.renameFailed', { message: String(error) }));
 			}
 		}
 		log.debug(`[moveFiles] Done moving ${filesToMove.length} files`);
@@ -262,21 +274,20 @@
 </script>
 
 <CollapsibleSection
-	title="Defaults"
-	shortDesc="Default Folder and Project settings"
+	title={t('settings.sync.defaults')}
+	shortDesc={t('settings.sync.defaultsDesc')}
 	open={open}
 	on:headerClick={handleHeaderClick}
 >
 	<div class="sync-control">
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Default Project</div>
+				<div class="setting-item-name">{t('settings.defaults.projectName')}</div>
 				<div class="setting-item-description">
-					<div>Tasks are added to the default project associated with a file.</div>
-					<div>If tasks are added to a file with no default project association
+					<div>{t('settings.defaults.projectDesc1')}</div>
+					<div>{t('settings.defaults.projectDesc2')}
 					</div>
-					<div>they will be added to the <span
-						class="setting-item-name"> {getSettings().defaultProjectName}</span> project.
+					<div>{@html t('settings.defaults.projectDesc3', { project: `<span class="setting-item-name"> ${escapeForHtml(getSettings().defaultProjectName)}</span>` })}
 					</div>
 				</div>
 			</div>
@@ -287,7 +298,7 @@
 					bind:value={defaultProjectId}
 					on:change={(e: Event) => handleDefaultProjectChange((e.target as HTMLSelectElement).value)}
 				>
-					<option value="">(none)</option>
+					<option value="">{t('common.none')}</option>
 					{#each Object.entries(myProjectsOptions) as [id, name]}
 						<option value={id}>{name}</option>
 					{/each}
@@ -298,12 +309,12 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Default folder location</div>
+				<div class="setting-item-name">{t('settings.defaults.folderName')}</div>
 				<div class="setting-item-description">
-					<div>Folder where TickTick tasks are stored.</div>
-					Default Project File <span class="setting-item-name"> {currentDefault}.md</span>
+					<div>{t('settings.defaults.folderDesc')}</div>
+					{t('settings.defaults.projectFile')} <span class="setting-item-name"> {currentDefault}.md</span>
 					{#if showCreateText}
-						will be created <strong><span class="setting-item-name"> after you hit  ENTER </span></strong>
+						{t('settings.defaults.willBeCreated')} <strong><span class="setting-item-name"> {t('settings.defaults.hitEnter')} </span></strong>
 					{/if}
 				</div>
 			</div>
@@ -320,18 +331,20 @@
 
 	<div style="margin-top: 2em; text-align: right;">
 		<button class="mod-cta" on:click={onUpdateWorldClicked} disabled={!showUpdateButton}>
-			Move Existing Files.
+			{t('settings.defaults.moveExisting')}
 		</button>
 	</div>
 
 	<!-- MODAL DIALOG: simple conditional rendering -->
 	{#if showUpdateWorldModal}
-		<div class="local-modal-backdrop" role="button" tabindex="0" on:click={closeModal} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeModal(); } }} aria-label="Close"></div>
+		<div class="local-modal-backdrop" role="button" tabindex="0" on:click={closeModal} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeModal(); } }} aria-label={t('common.close')}></div>
 		<div class="local-modal-dialog">
 			<div class="local-modal-content">
-				<h2>Update the World</h2>
+				<h2>{t('settings.defaults.updateWorldTitle')}</h2>
 				{#if filesToMove.length > 0}
-					<p>The following files contain tasks and will be moved to <strong>/{getDefaultFolder()}</strong>{getSettings().keepProjectFolders ? ' (organized by project groups)' : ''}:
+					<p>{@html t('settings.defaults.updateWorldBody', {
+						folder: `/<strong>${escapeForHtml(getDefaultFolder())}</strong>`
+					})}{getSettings().keepProjectFolders ? t('settings.defaults.organizedByGroups') : ''}:
 					</p>
 					<ul class="file-list">
 						{#each filesToMove as file}
@@ -339,13 +352,13 @@
 						{/each}
 					</ul>
 					<div class="local-modal-actions">
-						<button class="mod-cta" on:click={confirmUpdateWorld}>Yes, move them!</button>
-						<button on:click={closeModal} style="margin-left:1em;">No, cancel</button>
+						<button class="mod-cta" on:click={confirmUpdateWorld}>{t('settings.defaults.yesMove')}</button>
+						<button on:click={closeModal} style="margin-left:1em;">{t('settings.defaults.noCancel')}</button>
 					</div>
 				{:else}
-					<p>No files found containing relevant tasks to move.</p>
+					<p>{t('settings.defaults.noFilesToMove')}</p>
 					<div class="local-modal-actions">
-						<button on:click={closeModal}>Close</button>
+						<button on:click={closeModal}>{t('common.close')}</button>
 					</div>
 				{/if}
 			</div>

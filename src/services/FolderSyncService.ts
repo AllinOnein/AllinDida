@@ -14,6 +14,7 @@ import { upsertFile, deleteFile } from '@/db/files';
 import { NewFileMap } from '@/services/NewFileMap';
 import { FileLocationConflictModal } from '@/modals/FileLocationConflictModal';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 import type TickTickSync from '@/main';
 
 export class FolderSyncService {
@@ -204,7 +205,7 @@ export class FolderSyncService {
 			const existingFile = this.app.vault.getAbstractFileByPath(newPath);
 			if (existingFile) {
 				log.warn(`File ${newPath} already exists, cannot move ${oldPath}`);
-				new Notice(`Cannot move file: ${newPath} already exists`);
+				new Notice(t('reorganize.moveExists', { path: newPath }));
 				return undefined;
 			}
 
@@ -219,7 +220,7 @@ export class FolderSyncService {
 			return newPath;
 		} catch (error) {
 			log.error(`Error moving file from ${oldPath} to ${newFolderPath}/${filename}:`, error);
-			new Notice(`Error moving file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			new Notice(t('reorganize.moveError', { message: error instanceof Error ? error.message : t('common.unknown') }));
 			return undefined;
 		}
 	}
@@ -292,7 +293,7 @@ export class FolderSyncService {
 					await deleteFile(filePath);
 				}
 				await upsertFile(expectedPath, project.id);
-				new Notice(`Moved ${filePath} to ${expectedPath}`);
+				new Notice(t('file.moved', { from: filePath, to: expectedPath }));
 				break;
 			}
 			case 'delete-misplaced': {
@@ -307,7 +308,7 @@ export class FolderSyncService {
 				if (targetExists) {
 					await upsertFile(expectedPath, project.id);
 				}
-				new Notice(`Deleted ${filePath}`);
+				new Notice(t('file.deleted', { path: filePath }));
 				break;
 			}
 			case 'delete-correct': {
@@ -321,7 +322,7 @@ export class FolderSyncService {
 					await this.repointTasks(filePath, expectedPath);
 					await deleteFile(filePath);
 					await upsertFile(expectedPath, project.id);
-					new Notice(`Deleted ${expectedPath} and moved ${filePath} in its place`);
+					new Notice(t('file.deletedAndMoved', { path: expectedPath, from: filePath }));
 				}
 				break;
 			}

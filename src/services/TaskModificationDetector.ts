@@ -26,6 +26,7 @@ import { NewFileMap, type ITaskItemRecord, type ITaskRecord } from '@/services/N
 import { FolderSyncService } from '@/services/FolderSyncService';
 import { getSettings } from '@/settings';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 import ObjectID from 'bson-objectid';
 import { normalizeRepeatFlag } from '@/utils/RecurrenceConverter';
 
@@ -126,7 +127,7 @@ export class TaskModificationDetector {
 					}
 				}
 
-				new Notice(`New task created: ${newTask.title} (ID: ${newTask.id})`);
+				new Notice(t('task.created', { title: newTask.title, id: newTask.id }));
 
 				// If task was created as completed, close it in TickTick
 				if (currentTask.status != 0) {
@@ -154,7 +155,7 @@ export class TaskModificationDetector {
 				log.error('Error adding task:', error);
 				log.error(`The error occurred in file: ${fileMap.getFilePath()}`);
 				new Notice(
-					`Failed to add task to TickTick: ${error instanceof Error ? error.message : String(error)}. The task was not modified.`,
+					t('task.createFailed', { message: error instanceof Error ? error.message : String(error) }),
 					8000
 				);
 			}
@@ -257,7 +258,7 @@ export class TaskModificationDetector {
 			}
 
 			log.error(`Task ${taskId} not found on TickTick. Deleting from file ${filepath}`);
-			new Notice(`Task not found. It will be removed from the file.`);
+			new Notice(t('task.notFoundWillRemove'));
 			const file = this.app.vault.getAbstractFileByPath(filepath!);
 			if (!(file instanceof TFile)) { return false; }
 			const lineTask = (await this.plugin.taskParser?.convertLineToTask(lineText, lineNumber!, filepath!, fileMap, taskRecord));
@@ -572,7 +573,7 @@ export class TaskModificationDetector {
 			}
 		} catch (error) {
 			log.error(`Error handling project group move for task ${task.id}:`, error);
-			new Notice(`Error moving task file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			new Notice(t('reorganize.taskFileError', { message: error instanceof Error ? error.message : t('common.unknown') }));
 		}
 	}
 

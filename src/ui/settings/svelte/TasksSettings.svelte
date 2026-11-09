@@ -7,6 +7,7 @@
 	import ResetTasksControl from '@/ui/settings/svelte/ResetTasksControl.svelte';
 
 	import { resetTasks } from '@/ui/settings/utils/ResetSynchronization'
+	import { t } from '@/i18n';
 
 	export let plugin: TickTickSync;
 
@@ -36,7 +37,7 @@
 	}
 
 	let resetTasksText: string = '';
-	$: resetTasksText = 'Update Tasks in TickTick and Obsidian?';
+	$: resetTasksText = t('settings.reset.updateTasks');
 
 	async function confirmKeepFoldersChange() {
 		modalWorking = true;
@@ -71,7 +72,7 @@
 
 	// Remove noteLink from options if needed
 	$: if (!syncNotes) {
-		const opt = { ...LINK_BEHAVIOR };
+		const opt: Record<string, string> = { ...LINK_BEHAVIOR };
 		delete opt['noteLink'];
 		linkBehaviorOptions = opt;
 	} else {
@@ -146,22 +147,22 @@
 		style={modalWorking ? 'cursor: wait;' : ''}
 	>
 		<div class="local-modal-content">
-			<h2>Reorganize Files?</h2>
-			<p>Would you like to reorganize existing task files into folders now?</p>
-			<p>This will move plugin-managed files to match your TickTick folder structure.</p>
-			<p style="color:var(--text-warning);"><em>Files without a default project will not be moved.</em></p>
+			<h2>{t('settings.tasks.reorganizeTitle')}</h2>
+			<p>{t('settings.tasks.reorganizeQuestion')}</p>
+			<p>{t('settings.tasks.reorganizeExplain')}</p>
+			<p style="color:var(--text-warning);"><em>{t('settings.tasks.reorganizeWarning')}</em></p>
 			<div class="local-modal-actions">
 				<button class="mod-cta"
 					on:click={confirmKeepFoldersChange}
 					disabled={modalWorking}>
-					{modalWorking ? 'Reorganizing...' : 'Yes, reorganize'}
+					{modalWorking ? t('settings.tasks.reorganizing') : t('settings.tasks.yesReorganize')}
 				</button>
 				<button
 					style="margin-left:1em;"
 					on:click={closeKeepFoldersModal}
 					disabled={modalWorking}
 				>
-					No, cancel
+					{t('settings.defaults.noCancel')}
 				</button>
 			</div>
 		</div>
@@ -171,8 +172,8 @@
 {#if !syncNotes}
 		<div class="setting-item-info">
 			<hr>
-			<div class="setting-item-name">Notice:</div>
-			<p>Note syncing is disabled. Links can only be added to the Task text or not added at all.</p>
+			<div class="setting-item-name">{t('settings.tasks.notesDisabledTitle')}</div>
+			<p>{t('settings.tasks.notesDisabledBody')}</p>
 			<hr>
 		</div>
 	{/if}
@@ -180,10 +181,9 @@
 	<div class="task-settings ">
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Organize tasks by TickTick folders</div>
+				<div class="setting-item-name">{t('settings.tasks.keepFoldersName')}</div>
 				<div class="setting-item-description">
-					When enabled, tasks will be organized into Obsidian folders matching your TickTick folder structure.
-					Files without a default project will not be moved.
+					{t('settings.tasks.keepFoldersDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">
@@ -197,8 +197,8 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Task link handling in Obsidian</div>
-				<div class="setting-item-description"> Add TickTick task link to Tasks in Obsidian
+				<div class="setting-item-name">{t('settings.tasks.obsidianLinkName')}</div>
+				<div class="setting-item-description">{t('settings.tasks.obsidianLinkDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">
@@ -219,8 +219,8 @@
 	<div class="task-settings ">
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Task link handling in TickTick</div>
-				<div class="setting-item-description"> Add Obsidian file link to Tasks in TickTick
+				<div class="setting-item-name">{t('settings.tasks.tickTickLinkName')}</div>
+				<div class="setting-item-description">{t('settings.tasks.tickTickLinkDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">
@@ -242,17 +242,17 @@
 	<hr>
 
 	<div class="task-settings ">
-		<h3 class="setting-item-name" style="margin-bottom: 8px;">Task Display</h3>
+		<h3 class="setting-item-name" style="margin-bottom: 8px;">{t('settings.tasks.displayTitle')}</h3>
 		<p class="setting-item-description" style="margin-bottom: 12px;">
-			Control which task elements are visible in Reading mode and Edit mode.
+			{t('settings.tasks.displayDesc')}
 		</p>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">TickTick Link</div>
+				<div class="setting-item-name">{t('settings.tasks.tickTickLink')}</div>
 			</div>
 			<div class="setting-item-control" style="gap: 8px; flex-wrap: wrap;">
-				<label style="font-size: var(--font-small);">Reading:
+				<label style="font-size: var(--font-small);">{t('settings.tasks.reading')}:
 					<select
 						class="dropdown"
 						bind:value={readingLink}
@@ -263,7 +263,7 @@
 						{/each}
 					</select>
 				</label>
-				<label style="font-size: var(--font-small);">Edit:
+				<label style="font-size: var(--font-small);">{t('settings.tasks.edit')}:
 					<select
 						class="dropdown"
 						bind:value={editingLink}
@@ -279,17 +279,17 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">TickTick ID</div>
+				<div class="setting-item-name">{t('settings.tasks.tickTickId')}</div>
 			</div>
 			<div class="setting-item-control" style="gap: 8px; flex-wrap: wrap;">
-				<label style="font-size: var(--font-small);">Reading:
+				<label style="font-size: var(--font-small);">{t('settings.tasks.reading')}:
 					<input
 						type="checkbox"
 						bind:checked={readingId}
 						on:change={(e: Event) => handleTaskDisplayChange('reading.id', (e.target as HTMLInputElement).checked)}
 					/>
 				</label>
-				<label style="font-size: var(--font-small);">Edit:
+				<label style="font-size: var(--font-small);">{t('settings.tasks.edit')}:
 					<input
 						type="checkbox"
 						bind:checked={editingId}
@@ -301,17 +301,17 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">#ticktick Tag</div>
+				<div class="setting-item-name">{t('settings.tasks.tickTickTag')}</div>
 			</div>
 			<div class="setting-item-control" style="gap: 8px; flex-wrap: wrap;">
-				<label style="font-size: var(--font-small);">Reading:
+				<label style="font-size: var(--font-small);">{t('settings.tasks.reading')}:
 					<input
 						type="checkbox"
 						bind:checked={readingTag}
 						on:change={(e: Event) => handleTaskDisplayChange('reading.tag', (e.target as HTMLInputElement).checked)}
 					/>
 				</label>
-				<label style="font-size: var(--font-small);">Edit:
+				<label style="font-size: var(--font-small);">{t('settings.tasks.edit')}:
 					<input
 						type="checkbox"
 						bind:checked={editingTag}
@@ -323,12 +323,9 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Stop injecting the ticktick tag on TickTick</div>
+				<div class="setting-item-name">{t('settings.tasks.stopInjectTitle')}</div>
 				<div class="setting-item-description">
-					The plugin marks synced tasks in Obsidian with a #ticktick tag and, for
-					backwards compatibility, also injects it onto the TickTick task itself.
-					Enable this to stop injecting it as a real TickTick tag. Existing tasks
-					keep the tag until it's removed in TickTick.
+					{t('settings.tasks.stopInjectDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">
@@ -342,10 +339,9 @@
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Strip the ticktick tag on reset</div>
+				<div class="setting-item-name">{t('settings.tasks.stripOnResetTitle')}</div>
 				<div class="setting-item-description">
-					On a task reset, actively remove the legacy "ticktick" tag from existing
-					TickTick tasks. Requires the setting above to be enabled.
+					{t('settings.tasks.stripOnResetDesc')}
 				</div>
 			</div>
 			<div class="setting-item-control">

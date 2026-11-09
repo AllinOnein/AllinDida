@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { t } from '@/i18n';
 
 export interface OrphanItem {
 	title: string;
@@ -9,9 +10,6 @@ export interface OrphanItem {
 export type OrphanAction = 'add' | 'delete' | 'cancel';
 
 export class OrphanTaskModal extends Modal {
-	title = 'Orphaned TickTick Tasks';
-
-	message = 'The following tasks exist in TickTick but were not found in the local vault or database:';
 	items: OrphanItem[] = [];
 	action: OrphanAction = 'cancel';
 	resolvePromise!: (value: OrphanAction) => void;
@@ -24,13 +22,14 @@ export class OrphanTaskModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText(this.title);
+		titleEl.setText(t('modal.orphan.title'));
 
-		contentEl.createEl('p', { text: this.message });
+		contentEl.createEl('p', { text: t('modal.orphan.message') });
 
+		const unknownLabel = t('common.unknown');
 		const groupedItems: Record<string, string[]> = {};
 		this.items.forEach(item => {
-			const group = item.filePath || item.projectName || 'Unknown';
+			const group = item.filePath || item.projectName || unknownLabel;
 			if (!groupedItems[group]) {
 				groupedItems[group] = [];
 			}
@@ -38,7 +37,7 @@ export class OrphanTaskModal extends Modal {
 		});
 
 		for (const [group, titles] of Object.entries(groupedItems)) {
-			if (group !== 'Unknown' || Object.keys(groupedItems).length > 1) {
+			if (group !== unknownLabel || Object.keys(groupedItems).length > 1) {
 				contentEl.createEl('strong', { text: group, attr: { style: 'display: block; margin-top: 10px;' } });
 			}
 			const unorderedList = contentEl.createEl('ul', { attr: { style: 'margin-top: 5px;' } });
@@ -49,12 +48,12 @@ export class OrphanTaskModal extends Modal {
 
 		contentEl.createEl('hr');
 
-		contentEl.createEl('p', { text: 'What would you like to do with these tasks?', attr: { style: 'margin-bottom: 10px;' } });
+		contentEl.createEl('p', { text: t('modal.orphan.chooseAction'), attr: { style: 'margin-bottom: 10px;' } });
 
 		new Setting(contentEl)
 			.addButton(cancelBtn => {
 				cancelBtn.setClass('ts_button');
-				cancelBtn.setButtonText('Cancel');
+				cancelBtn.setButtonText(t('modal.orphan.skip'));
 				cancelBtn.onClick(() => {
 					this.action = 'cancel';
 					this.close();
@@ -63,7 +62,7 @@ export class OrphanTaskModal extends Modal {
 			.addButton(deleteBtn => {
 				deleteBtn.setClass('ts_button');
 				deleteBtn.buttonEl.addClass('mod-destructive');
-				deleteBtn.setButtonText('Delete from ticktick');
+				deleteBtn.setButtonText(t('modal.orphan.delete'));
 				deleteBtn.onClick(() => {
 					this.action = 'delete';
 					this.close();
@@ -72,7 +71,7 @@ export class OrphanTaskModal extends Modal {
 			.addButton(addBtn => {
 				addBtn.setClass('ts_button');
 				addBtn.setCta();
-				addBtn.setButtonText('Add to file & db');
+				addBtn.setButtonText(t('modal.orphan.add'));
 				addBtn.onClick(() => {
 					this.action = 'add';
 					this.close();

@@ -3,6 +3,7 @@ import TickTickSync from '@/main';
 import { getAllProjects } from "@/db/projects";
 import { getAllFiles } from "@/db/files";
 import { db } from "@/db/dexie";
+import { t } from '@/i18n';
 
 
 export class SetDefaultProjectForFileModal extends Modal {
@@ -22,7 +23,7 @@ export class SetDefaultProjectForFileModal extends Modal {
 	async onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl('h5', { text: 'Set default project for ticktick tasks in the current file' });
+		contentEl.createEl('h5', { text: t('modal.defaultProject.description', { file: this.filepath }) });
 
 		this.defaultProjectId = await this.plugin.fileTaskQueries.getDefaultProjectIdForFilepath(this.filepath) ?? '';
 		const projectRecord = this.defaultProjectId ? await db.projects.get(this.defaultProjectId) : undefined;
@@ -40,7 +41,7 @@ export class SetDefaultProjectForFileModal extends Modal {
 		);
 
 		new Setting(contentEl)
-			.setName('Default project')
+			.setName(t('settings.defaults.projectName'))
 			//.setDesc('Set default project for TickTick tasks in the current file')
 			.addDropdown(component =>
 				component

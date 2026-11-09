@@ -3,6 +3,7 @@
 	import type {QueryWarning} from "@/query/parser";
 	import type {TickTickService} from "@/services";
 	import store from "@/store";
+	import { t } from "@/i18n";
 
 	export let query: Query;
 	export let warnings: QueryWarning[];
@@ -17,21 +18,21 @@
 </script>
 
 <div class="break-words">
-	<h1 class="">Tasks</h1>
+	<h1 class="">{t('query.tasks')}</h1>
 	<p>
 		{#await tasksPromise}
-			Loading tasks...
+			{t('query.loading')}
 		{:then tasks}
 			{#each tasks as task}
 				{task.title}<br/>
 			{/each}
 		{:catch someError}
-			System error: {someError.message}.
+			{t('query.systemError', { message: someError.message })}
 		{/await}
 	</p>
 	{#if warnings.length > 0}
 		<div class="warning">
-			<h2>Warnings</h2>
+			<h2>{t('query.warnings')}</h2>
 			{#each warnings as warning}
 				<p>{warning}</p>
 			{/each}

@@ -2,14 +2,11 @@ import { App, Modal, Setting } from 'obsidian';
 import TickTickSync from '@/main';
 import { getSettings } from '@/settings';
 import type { IProject } from '@/api/types/Project';
+import { t } from '@/i18n';
 
 
 export class FoundDuplicateListsModal extends Modal {
-	title = 'Duplicate Projects/Lists found';
-
 	message: string;
-	cancelLabel = 'Cancel';
-	confirmLabel = 'Abort Sync';
 	projects: IProject[] = [];
 	result!: boolean;
 	onSubmit: (result: boolean) => void;
@@ -20,8 +17,8 @@ export class FoundDuplicateListsModal extends Modal {
 		super(app);
 		this.plugin = plugin;
 		this.projects = projects;
-		this.message = `The following duplicate Projects/Lists were found. On ${getSettings().baseURL},` +
-			`please either choose one of those to contain the tasks from both lists, or rename one of the lists.`;
+		// 文案在构造时按当前语言拼好，{baseURL} 由 t() 替换。
+		this.message = t('modal.duplicateLists.message', { baseURL: getSettings().baseURL });
 		this.onSubmit = onSubmit;
 	}
 
@@ -31,7 +28,7 @@ export class FoundDuplicateListsModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText(this.title);
+		titleEl.setText(t('modal.duplicateLists.title'));
 
 		contentEl.createEl('p', { text: `${this.message}` });
 		// const unorderedList = contentEl.createEl('ul');
@@ -42,8 +39,8 @@ export class FoundDuplicateListsModal extends Modal {
 		const projectsTableHeadRow = projectsTableHead.createEl('tr');
 		const projectsTableHeadRowName = projectsTableHeadRow.createEl('th');
 		const projectsTableHeadRowName2 = projectsTableHeadRow.createEl('th');
-		projectsTableHeadRowName.setText('Project name');
-		projectsTableHeadRowName2.setText('Project ID');
+		projectsTableHeadRowName.setText(t('modal.duplicateLists.projectName'));
+		projectsTableHeadRowName2.setText(t('modal.duplicateLists.projectId'));
 		const projectsTableBody = projectsTable.createEl('tbody');
 
 		this.projects.forEach((project) => {
@@ -58,7 +55,7 @@ export class FoundDuplicateListsModal extends Modal {
 		new Setting(contentEl).addButton(confirmBtn => {
 			confirmBtn.setClass('ts_button');
 			confirmBtn.buttonEl.addClass('mod-destructive');
-			confirmBtn.setButtonText(this.confirmLabel);
+			confirmBtn.setButtonText(t('modal.duplicateLists.abort'));
 			confirmBtn.onClick(() => {
 				this.result = true;
 				this.onSubmit(this.result);
@@ -85,6 +82,3 @@ export class FoundDuplicateListsModal extends Modal {
 		);
 	}
 }
-
-
-

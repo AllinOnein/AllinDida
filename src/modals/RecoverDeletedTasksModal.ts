@@ -2,6 +2,7 @@ import { App, Modal, Notice, Setting } from 'obsidian';
 import type TickTickSync from '@/main';
 import type { LocalTask } from '@/db/schema';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 
 export class RecoverDeletedTasksModal extends Modal {
 	private plugin: TickTickSync;
@@ -17,14 +18,14 @@ export class RecoverDeletedTasksModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText('Recover deleted tasks');
+		titleEl.setText(t('modal.recover.title'));
 
-		contentEl.createEl('p', { text: 'Select tasks to recover. Default restores to original file.' });
+		contentEl.createEl('p', { text: t('modal.recover.intro') });
 
 		if (this.items.length === 0) {
-			contentEl.createEl('p', { text: 'No deleted tasks found.' });
+			contentEl.createEl('p', { text: t('task.noDeletedFound') });
 			new Setting(contentEl).addButton(btn => {
-				btn.setButtonText('Close');
+				btn.setButtonText(t('common.close'));
 				btn.onClick(() => {
 					this.resolvePromise(false);
 					this.close();
@@ -37,8 +38,8 @@ export class RecoverDeletedTasksModal extends Modal {
 
 		this.items.forEach((localTask) => {
 			const task = localTask;
-			const title = task.task.title || 'Untitled';
-			const originalFile = task.file || 'No file';
+			const title = task.task.title || t('modal.recover.untitled');
+			const originalFile = task.file || t('modal.recover.noFile');
 			const deletedAt = new Date(task.updatedAt).toLocaleDateString();
 
 			const section = listEl.createDiv({ attr: { style: 'border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 8px; margin-bottom: 8px;' } });
@@ -46,23 +47,23 @@ export class RecoverDeletedTasksModal extends Modal {
 			section.createEl('strong', { text: title.length > 80 ? title.substring(0, 80) + '...' : title });
 
 			const meta = section.createDiv({ attr: { style: 'font-size: 0.85em; color: var(--text-muted); margin: 4px 0;' } });
-			meta.setText(`Original file: ${originalFile} | Deleted: ${deletedAt}`);
+			meta.setText(t('modal.recover.meta', { file: originalFile, date: deletedAt }));
 
 			const btnDiv = section.createDiv({ attr: { style: 'display: flex; gap: 6px; margin-top: 6px;' } });
 
 			const recoverBtn = btnDiv.createEl('button', {
-				text: 'Recover to original file',
+				text: t('modal.recover.toOriginal'),
 				attr: { style: 'padding: 4px 8px; cursor: pointer;' }
 			});
 			recoverBtn.className = 'ts_button';
 			recoverBtn.addEventListener('click', () => {
 				this.recoverTask(task, task.file || undefined)
 					.then(() => this.removeItem(task, section))
-					.catch((e: unknown) => new Notice(`Recovery failed: ${(e as Error).message}`));
+					.catch((e: unknown) => new Notice(t('task.recoveryFailed', { message: (e as Error).message })));
 			});
 
 			const customBtn = btnDiv.createEl('button', {
-				text: 'Recover to different file...',
+				text: t('modal.recover.toOther'),
 				attr: { style: 'padding: 4px 8px; cursor: pointer;' }
 			});
 			customBtn.className = 'ts_button';
@@ -70,26 +71,26 @@ export class RecoverDeletedTasksModal extends Modal {
 				const fileInput = section.createEl('input', {
 					attr: {
 						type: 'text',
-						placeholder: 'Enter file path (e.g. Folder/task.md)',
+						placeholder: t('modal.recover.pathPlaceholder'),
 						style: 'width: 100%; margin-top: 6px; padding: 4px; box-sizing: border-box;'
 					}
 				});
 				fileInput.value = task.file || '';
 
 				const confirmCustom = section.createEl('button', {
-					text: 'Confirm recovery',
+					text: t('modal.recover.confirmRecovery'),
 					attr: { style: 'padding: 4px 8px; margin-top: 4px; cursor: pointer;' }
 				});
 				confirmCustom.className = 'ts_button';
 				confirmCustom.addEventListener('click', () => {
 					const targetPath = fileInput.value.trim();
 					if (!targetPath) {
-						new Notice('Please enter a valid file path.');
+						new Notice(t('task.enterValidPath'));
 						return;
 					}
 					this.recoverTask(task, targetPath)
 						.then(() => this.removeItem(task, section))
-						.catch((e: unknown) => new Notice(`Recovery failed: ${(e as Error).message}`));
+						.catch((e: unknown) => new Notice(t('task.recoveryFailed', { message: (e as Error).message })));
 				});
 
 				customBtn.remove();
@@ -97,7 +98,7 @@ export class RecoverDeletedTasksModal extends Modal {
 		});
 
 		new Setting(contentEl).addButton(cancelBtn => {
-			cancelBtn.setButtonText('Close');
+			cancelBtn.setButtonText(t('common.close'));
 			cancelBtn.onClick(() => {
 				this.resolvePromise(false);
 				this.close();
@@ -123,7 +124,7 @@ export class RecoverDeletedTasksModal extends Modal {
 			log.warn(`File sync may have failed for recovered task ${localTask.taskId}`);
 		}
 
-		new Notice(`Task recovered to ${filePath}`);
+		new Notice(t('task.recoveredTo', { path: filePath }));
 	}
 
 	private removeItem(localTask: LocalTask, sectionEl: HTMLDivElement) {
@@ -131,7 +132,7 @@ export class RecoverDeletedTasksModal extends Modal {
 		if (idx !== -1) this.items.splice(idx, 1);
 		sectionEl.remove();
 		if (this.items.length === 0) {
-			new Notice('All tasks have been recovered.');
+			new Notice(t('task.allRecovered'));
 			this.resolvePromise(true);
 			this.close();
 		}

@@ -2,6 +2,7 @@ import { App, Modal, Setting } from 'obsidian';
 import { getSyncJournal, clearJournal } from '@/sync/journal';
 import type { JournalEntry } from '@/db/schema';
 import { getSettings } from '@/settings';
+import { t } from '@/i18n';
 
 export class SyncJournalModal extends Modal {
 	entries: JournalEntry[] = [];
@@ -14,7 +15,7 @@ export class SyncJournalModal extends Modal {
 
 	async onOpen() {
 		const { titleEl, contentEl } = this;
-		titleEl.setText('Sync journal');
+		titleEl.setText(t('modal.journal.title'));
 
 		const settings = getSettings();
 		for (const d of settings.devices) {
@@ -22,7 +23,7 @@ export class SyncJournalModal extends Modal {
 		}
 
 		contentEl.createEl('p', {
-			text: 'Loading journal entries...',
+			text: t('modal.journal.loading'),
 			attr: { id: 'journal-loading' }
 		});
 
@@ -43,7 +44,7 @@ export class SyncJournalModal extends Modal {
 		contentEl.empty();
 
 		const count = contentEl.createDiv({
-			text: `${this.entries.length} journal entr${this.entries.length === 1 ? 'y' : 'ies'}`
+			text: t('modal.journal.count', { count: this.entries.length })
 		});
 		count.addClass('sync-journal-count');
 
@@ -51,7 +52,7 @@ export class SyncJournalModal extends Modal {
 		container.addClass('sync-journal-container');
 
 		if (this.entries.length === 0) {
-			container.createDiv({ text: 'No journal entries found.' });
+			container.createDiv({ text: t('modal.journal.empty') });
 		} else {
 			for (const entry of this.entries) {
 				const row = container.createDiv();
@@ -78,12 +79,12 @@ export class SyncJournalModal extends Modal {
 
 		new Setting(buttonGroup)
 			.addButton(btn => {
-				btn.setButtonText('Save to JSON');
+				btn.setButtonText(t('modal.journal.save'));
 				btn.setCta();
 				btn.onClick(() => this.saveToJson());
 			})
 			.addButton(btn => {
-				btn.setButtonText('Clear journal');
+				btn.setButtonText(t('modal.journal.clear'));
 				btn.onClick(async () => {
 					await clearJournal();
 					this.entries = [];
@@ -91,7 +92,7 @@ export class SyncJournalModal extends Modal {
 				});
 			})
 			.addButton(btn => {
-				btn.setButtonText('Close');
+				btn.setButtonText(t('common.close'));
 				btn.onClick(() => this.close());
 			});
 	}

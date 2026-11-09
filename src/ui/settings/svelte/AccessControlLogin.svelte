@@ -6,10 +6,12 @@
 	import { getSettings, updateSettings } from '@/settings';
 	import log from 'loglevel';
 	import { getTick } from '@/api/tick_singleton_factory';
+	import { t } from '@/i18n';
 
 	export let plugin: TickTickSync;
 
 	let loginBusy = false;
+	// 两个服务商都是品牌名，不翻译；仅把 "Not Selected" 之类的状态文案交给 i18n。
 	const PROVIDER_OPTIONS = { 'ticktick.com': 'TickTick', 'dida365.com': 'Dida365' };
 	let userLogin: string;
 	let userPassword: string;
@@ -23,7 +25,7 @@
 	async function saveLoginInfo(info: { inboxId: string | null; token: string | null }) {
 		const oldInboxId = $settingsStore.inboxID;
 		if (oldInboxId &&  oldInboxId.length > 0 && oldInboxId != info.inboxId) {
-			new Notice('You are logged in with a different user ID.');
+			new Notice(t('login.differentUser'));
 		}
 		settingsStore.update(s => ({ ...s, token: info.token, inboxID: info.inboxId, checkPoint: 0 }));
 		updateSettings({ token: info.token, inboxID: info.inboxId, inboxName: 'Inbox', checkPoint: 0 });
@@ -33,14 +35,19 @@
 		if (plugin.tickTickRestAPI && plugin.tickTickRestAPI.api) plugin.tickTickRestAPI.api = api;
 		if (plugin.service) plugin.service.api = api;
 
-		await plugin.initializePlugin();
-		await plugin.saveSettings(true);
+		const initialized = await plugin.initializePlugin();
+		await plugin.saveSettings();
+		if (initialized) {
+			// Startup skipped the periodic sync because initialization failed;
+			// now that credentials are valid, start the interval.
+			plugin.reloadInterval();
+		}
 	}
 
 	async function handleLogin() {
 		isWorking = true;
 		if (!$settingsStore.baseURL || !userLogin || !userPassword) {
-			new Notice('Please fill in both Username and Password');
+			new Notice(t('login.enterCredentials'));
 			isWorking = false;
 			return;
 		}
@@ -48,7 +55,7 @@
 		try {
 			const info = await plugin.service.login(baseURL, userLogin, userPassword);
 			if (!info) {
-				new Notice('Login Failed. ');
+				new Notice(t('login.failedShort'));
 				await saveLoginInfo({ inboxId: null, token: null });
 				isWorking = false;
 				return;
@@ -66,7 +73,7 @@
 		loginBusy = true;
 		isWorking = true;
 		try {
-			new Notice('Opening login...');
+			new Notice(t('login.opening'));
 			const isMobile = Platform.isAndroidApp || Platform.isIosApp;
 
 			let cookie: { name: string; value: string } | null = null;
@@ -74,7 +81,7 @@
 				const { DesktopAuth } = await import('@/utils/login/desktop_authenticator');
 				cookie = await new DesktopAuth(plugin, baseURL).authenticate();
 			} else if (isMobile) {
-				new Notice('Mobile only allows for Regular Login.', 5000);
+				new Notice(t('login.mobileOnlyRegular'), 5000);
 			}
 
 			if (!cookie?.value) throw new Error('No cookie received.');
@@ -92,9 +99,9 @@
 			const info = await api.getUserStatus();
 			if (!info) throw new Error('Failed to verify login with API.');
 			await saveLoginInfo(info);
-			new Notice('Login successful.');
+			new Notice(t('login.successful'));
 		} catch (e: any) {
-			new Notice('Login failed: ' + (e?.message || e), 5000);
+			new Notice(t('login.failedWithMessage', { message: e?.message || String(e) }), 5000);
 			await saveLoginInfo({ inboxId: null, token: null });
 			log.error('Authentication error:', e);
 		} finally {
@@ -107,26 +114,23 @@
 		loggedIn = !!$settingsStore.token;
 		baseURL = $settingsStore.baseURL;
 		desktoApp = Platform.isDesktopApp;
-		providerString = PROVIDER_OPTIONS[baseURL] || 'Not Selected';
+		providerString = PROVIDER_OPTIONS[baseURL] || t('settings.login.notSelected');
 	});
 </script>
 
 <div class="access-control">
 	<div class="login-status-banner">
-		{loggedIn ? 'You are logged in. You can re-login here.' : 'Please login here.'}
+		{loggedIn ? t('settings.login.loggedIn') : t('settings.login.pleaseLogin')}
 		<div class="login-status-banner-actions">
-			<br>Regardless of login option, TickTickSync will not save your User ID or your Password anywhere.<br>
+			<br>{t('settings.login.privacy')}<br>
 		</div>
 		{#if desktoApp}
 			<div class="login-status-banner-actions">
-				<br>If your { providerString } account is set up with SSO/2FA, login using SSO/2FA.<br>If
-				your { providerString } account set up with a username and password, login using Regular Login.<br>
+				<br>{t('settings.login.ssoHintDesktop', { provider: providerString })}<br>
 			</div>
 		{:else }
 			<div class="login-status-banner-actions">
-				<br>Mobile only allows Regular Login.<br>
-				If your { providerString } account is set up with SSO/2FA, please login from desktop first,
-				synchronize your vault to this device and you will be logged in.<br>
+				<br>{t('settings.login.mobileHint', { provider: providerString })}<br>
 			</div>
 		{/if}
 	</div>
@@ -134,7 +138,7 @@
 	<div class="setting-item">
 		<div class="setting-item-info">
 			<div class="setting-item-name">{ providerString }</div>
-			<div class="setting-item-description">Select home server</div>
+			<div class="setting-item-description">{t('settings.login.homeServer')}</div>
 		</div>
 		<div class="setting-item-control">
 			<select disabled={isWorking}
@@ -162,12 +166,12 @@
 		<div class='card-section'>
 			<div class="setting-item">
 				<div class="setting-item-info">
-					<div class="setting-item-name">SSO/2FA Login</div>
+					<div class="setting-item-name">{t('settings.login.ssoLogin')}</div>
 					<div class="setting-item-description"></div>
 				</div>
 				<div class="setting-item-control">
 					<button disabled={isWorking} class="mod-cta ts_login_button" on:click={webBasedLogin}>
-						Login with {providerString}
+						{t('settings.login.loginWith', { provider: providerString })}
 					</button>
 				</div>
 			</div>
@@ -175,39 +179,39 @@
 	{/if}
 	<div class='card-section'>
 		<div class="setting-item-info">
-			<div class="setting-item-name">Regular Login</div>
+			<div class="setting-item-name">{t('settings.login.regularLogin')}</div>
 			<div class="setting-item-description"></div>
 		</div>
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Username</div>
-				<div class="setting-item-description">Your {providerString} account username</div>
+				<div class="setting-item-name">{t('settings.login.username')}</div>
+				<div class="setting-item-description">{t('settings.login.usernameDesc', { provider: providerString })}</div>
 			</div>
 			<div class="setting-item-control">
-				<input type="text" placeholder="Username" bind:value={userLogin} />
+				<input type="text" placeholder={t('settings.login.username')} bind:value={userLogin} />
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Password</div>
-				<div class="setting-item-description">Your { providerString } account password</div>
+				<div class="setting-item-name">{t('settings.login.password')}</div>
+				<div class="setting-item-description">{t('settings.login.passwordDesc', { provider: providerString })}</div>
 			</div>
 			<div class="setting-item-control">
-				<input type="password" placeholder="Password" bind:value={userPassword} />
+				<input type="password" placeholder={t('settings.login.password')} bind:value={userPassword} />
 			</div>
 		</div>
 
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Login</div>
+				<div class="setting-item-name">{t('settings.login.login')}</div>
 				<div class="setting-item-description">
-					{loggedIn ? 'You are logged in. You can re-login here.' : 'Please login here.'}
+					{loggedIn ? t('settings.login.loggedIn') : t('settings.login.pleaseLogin')}
 				</div>
 			</div>
 			<div class="setting-item-control">
 				<button disabled={isWorking} class="mod-cta ts_login_button" on:click={handleLogin}>
-					Login
+					{t('settings.login.login')}
 				</button>
 			</div>
 		</div>

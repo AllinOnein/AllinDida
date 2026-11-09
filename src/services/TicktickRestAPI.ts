@@ -8,6 +8,7 @@ import { getSettings, updateSettings } from '@/settings';
 //logging
 import log from '@/utils/logger';
 import { getTick } from '@/api/tick_singleton_factory';
+import { t } from '@/i18n';
 
 export class TickTickRestAPI {
 	get checkpoint(): number {
@@ -33,7 +34,7 @@ export class TickTickRestAPI {
 		this._checkpoint = getSettings().checkPoint;
 
 		if (!this.token || this.token === '') {
-			new Notice('Please login from settings.', 5000);
+			new Notice(t('login.notLoggedIn'), 5000);
 			this.api = null;
 			log.error('No Token');
 			throw new Error('API Not Initialized.');
@@ -102,7 +103,7 @@ export class TickTickRestAPI {
 						log.debug(`Logged In: ${apiInitialized}`);
 					}
 				} else {
-					new Notice('Login failed, please login through settings.');
+					new Notice(t('login.failed'));
 					log.error('Login failed! ');
 					//updateSettings({apiInitialized: false});
 				}
@@ -110,7 +111,7 @@ export class TickTickRestAPI {
 				log.error('Login failed! ', error);
 				//updateSettings({apiInitialized: false});
 				//apiInitialized = false;
-				new Notice(`Login failed: ${error instanceof Error ? error.message : String(error)}\nPlease login again`);
+				new Notice(t('login.failedWithError', { message: error instanceof Error ? error.message : String(error) }));
 			} finally {
 				await this.plugin.saveSettings();
 			}
@@ -132,7 +133,10 @@ export class TickTickRestAPI {
 					? lastError.errorMessage
 					: lastError ? JSON.stringify(lastError) : 'no error details';
 				log.error('createTask failed:', lastError);
-				new Notice(`Failed to create task in TickTick${lastError?.statusCode ? ` (${lastError.statusCode})` : ''}: ${detail}`, 8000);
+				new Notice(t('task.createFailedApi', {
+					status: lastError?.statusCode ? ` (${lastError.statusCode})` : '',
+					message: detail,
+				}), 8000);
 				return null;
 			}
 
@@ -342,7 +346,7 @@ export class TickTickRestAPI {
 
 		} catch (error) {
 			log.error('Error get project groups', error);
-			new Notice('Unable to get project groups: ' + (error instanceof Error ? error.message : String(error)), 5000);
+			new Notice(t('project.groupsError', { message: error instanceof Error ? error.message : String(error) }), 5000);
 			return false;
 		}
 	}

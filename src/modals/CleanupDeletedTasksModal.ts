@@ -1,5 +1,6 @@
 import { App, ButtonComponent, Modal, Setting } from 'obsidian';
 import type { LocalTask } from '@/db/schema';
+import { t } from '@/i18n';
 
 export class CleanupDeletedTasksModal extends Modal {
 	items: { task: LocalTask; selected: boolean }[] = [];
@@ -13,14 +14,14 @@ export class CleanupDeletedTasksModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText('Permanently delete deleted tasks');
+		titleEl.setText(t('modal.cleanupDeleted.title'));
 
-		contentEl.createEl('p', { text: 'Select tasks to permanently remove from the database:' });
+		contentEl.createEl('p', { text: t('modal.cleanupDeleted.intro') });
 
 		if (this.items.length === 0) {
-			contentEl.createEl('p', { text: 'No deleted tasks found.' });
+			contentEl.createEl('p', { text: t('modal.cleanupDeleted.noTasks') });
 			new Setting(contentEl).addButton(btn => {
-				btn.setButtonText('Close');
+				btn.setButtonText(t('common.close'));
 				btn.onClick(() => {
 					this.resolvePromise([]);
 					this.close();
@@ -30,7 +31,7 @@ export class CleanupDeletedTasksModal extends Modal {
 		}
 
 		new Setting(contentEl)
-			.setName('Select all')
+			.setName(t('modal.cleanupDeleted.selectAll'))
 			.addToggle(toggle => {
 				toggle.setValue(false);
 				toggle.onChange(value => {
@@ -43,13 +44,13 @@ export class CleanupDeletedTasksModal extends Modal {
 
 		this.items.forEach(item => {
 			const task = item.task;
-			const title = task.task.title || 'Untitled';
-			const file = task.file || 'No file';
+			const title = task.task.title || t('modal.recover.untitled');
+			const file = task.file || t('modal.recover.noFile');
 			const deletedAt = new Date(task.updatedAt).toLocaleDateString();
 
 			new Setting(listEl)
 				.setName(title.length > 60 ? title.substring(0, 60) + '...' : title)
-				.setDesc(`File: ${file} | Deleted: ${deletedAt}`)
+				.setDesc(t('modal.recover.meta', { file, date: deletedAt }))
 				.addToggle(toggle => {
 					toggle.setValue(item.selected);
 					toggle.onChange(value => {
@@ -63,7 +64,7 @@ export class CleanupDeletedTasksModal extends Modal {
 
 		const buttonSetting = new Setting(contentEl);
 		buttonSetting.addButton(btn => {
-			btn.setButtonText('Delete permanently');
+			btn.setButtonText(t('modal.cleanupDeleted.deleteSelected'));
 			btn.buttonEl.addClass('mod-destructive');
 			btn.setDisabled(true);
 			deleteComponent = btn;
@@ -78,7 +79,7 @@ export class CleanupDeletedTasksModal extends Modal {
 		});
 
 		buttonSetting.addButton(cancelBtn => {
-			cancelBtn.setButtonText('Cancel');
+			cancelBtn.setButtonText(t('common.cancel'));
 			cancelBtn.onClick(() => {
 				this.resolvePromise([]);
 				this.close();
@@ -87,7 +88,7 @@ export class CleanupDeletedTasksModal extends Modal {
 
 		this.updateButtonText = () => {
 			const count = this.items.filter(i => i.selected).length;
-			deleteComponent?.setButtonText(`Delete permanently (${count})`);
+			deleteComponent?.setButtonText(`${t('modal.cleanupDeleted.deleteSelected')} (${count})`);
 			deleteComponent?.setDisabled(count === 0);
 		};
 	}

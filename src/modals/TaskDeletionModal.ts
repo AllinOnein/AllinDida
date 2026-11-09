@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { t } from '@/i18n';
 
 
 export interface DeletionItem {
@@ -7,12 +8,7 @@ export interface DeletionItem {
 }
 
 export class TaskDeletionModal extends Modal {
-	title = 'Task Deletion Confirmation';
-
-	message = 'The following Task(s) will be deleted because: ';
-	cancelLabel = 'Cancel';
-	confirmLabel = 'Confirm Deletion';
-	items: DeletionItem [] = [];
+	items: DeletionItem[] = [];
 	result!: boolean;
 	reason: string;
 	onSubmit: (result: boolean) => void;
@@ -32,14 +28,15 @@ export class TaskDeletionModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText(this.title);
+		titleEl.setText(t('modal.taskDeletion.title'));
 
-		contentEl.createEl('p', { text: `${this.message}${this.reason}` });
+		contentEl.createEl('p', { text: `${t('modal.taskDeletion.message')}${this.reason}` });
 
 		// Group items by filePath
+		const unknownFile = t('modal.taskDeletion.unknownFile');
 		const groupedItems: Record<string, string[]> = {};
 		this.items.forEach(item => {
-			const path = item.filePath || 'Unknown File';
+			const path = item.filePath || unknownFile;
 			if (!groupedItems[path]) {
 				groupedItems[path] = [];
 			}
@@ -47,7 +44,7 @@ export class TaskDeletionModal extends Modal {
 		});
 
 		for (const [filePath, titles] of Object.entries(groupedItems)) {
-			if (filePath !== 'Unknown File' || Object.keys(groupedItems).length > 1) {
+			if (filePath !== unknownFile || Object.keys(groupedItems).length > 1) {
 				contentEl.createEl('strong', { text: filePath, attr: { style: 'display: block; margin-top: 10px;' } });
 			}
 			const unorderedList = contentEl.createEl('ul', { attr: { style: 'margin-top: 5px;' } });
@@ -59,7 +56,7 @@ export class TaskDeletionModal extends Modal {
 
 		new Setting(contentEl).addButton(cancelBtn => {
 			cancelBtn.setClass('ts_button');
-			cancelBtn.setButtonText(this.cancelLabel);
+			cancelBtn.setButtonText(t('common.cancel'));
 			cancelBtn.onClick(() => {
 				this.result = false;
 				this.onSubmit(this.result);
@@ -69,7 +66,7 @@ export class TaskDeletionModal extends Modal {
 			.addButton(confirmBtn => {
 				confirmBtn.setClass('ts_button');
 				confirmBtn.buttonEl.addClass('mod-destructive');
-				confirmBtn.setButtonText(this.confirmLabel);
+				confirmBtn.setButtonText(t('modal.taskDeletion.confirm'));
 				confirmBtn.onClick(() => {
 					this.result = true;
 					this.onSubmit(this.result);

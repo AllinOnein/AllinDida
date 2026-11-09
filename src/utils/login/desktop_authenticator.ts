@@ -1,6 +1,7 @@
 import { Notice } from 'obsidian';
 import { CookieUtils, type CookieData } from './cookie-utils';
 import { getSettings } from '@/settings';
+import { t } from '@/i18n';
 
 type SessionCookie = { name: string; value: string };
 
@@ -67,7 +68,7 @@ export class DesktopAuth {
 				// ignore
 			}
 			if (!BrowserWindow) {
-				new Notice('Desktop login is not available in this environment.', 5000);
+				new Notice(t('login.desktopUnavailable'), 5000);
 				settle(null);
 				return;
 			}
@@ -208,7 +209,7 @@ export class DesktopAuth {
 								tryGetCookies().then(cookies => {
 									const found = cookies ? CookieUtils.findSessionCookie(cookies) : null;
 									if (!found) {
-										new Notice('Could not detect session cookie. Are you signed in?', 5000);
+										new Notice(t('login.cookieNotFound'), 5000);
 										// still resolve null so caller can decide next steps
 										tryCleanup();
 										w.close?.();
@@ -265,7 +266,7 @@ export class DesktopAuth {
 
 					// Load login
 					await w.loadURL(`https://${this.host}/signin`);
-					new Notice('Please sign in, then click finish or cancel.', 5000);
+					new Notice(t('login.signInThenFinish'), 5000);
 				} catch {
 					// If we can't open the window, resolve gracefully
 					settle(null);

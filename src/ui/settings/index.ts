@@ -4,6 +4,7 @@ import TickTickSync from '@/main';
 import { mount, unmount } from 'svelte';
 import SettingsTabs from '@/ui/settings/svelte/SettingsTabs.svelte';
 import { settingsLoad } from '@/ui/settings/settingsstore';
+import { t } from '@/i18n';
 
 type SettingsPageConstructor = new (plugin: TickTickSync) => SettingPage;
 
@@ -26,7 +27,7 @@ function getSettingsPageClass(): SettingsPageConstructor {
 			containerEl!: HTMLElement;
 			rootEl!: HTMLElement;
 			titlebarEl!: HTMLElement;
-			title = 'TickTickSync';
+			title = t('settings.pageName');
 			private plugin: TickTickSync;
 			private view: Record<string, unknown> | null = null;
 
@@ -94,8 +95,8 @@ export class TickTickSyncSettingTab extends PluginSettingTab {
 		return [
 			{
 				type: 'page',
-				name: 'TickTickSync',
-				desc: 'Configure TickTick synchronization settings',
+				name: t('settings.pageName'),
+				desc: t('settings.pageDesc'),
 				page: (): SettingPage => new (getSettingsPageClass())(this.plugin),
 			},
 		];

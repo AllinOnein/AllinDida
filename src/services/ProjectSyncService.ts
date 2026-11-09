@@ -8,6 +8,7 @@ import log from '@/utils/logger';
 import { db } from '@/db/dexie';
 import { getAllProjects } from '@/db/projects';
 import { upsertFile, getAllFiles } from '@/db/files';
+import { t } from '@/i18n';
 
 export class ProjectSyncService {
 	app: App;
@@ -56,7 +57,7 @@ export class ProjectSyncService {
 			return true;
 		} catch (error) {
 			log.error('Error on save projects: ', error);
-			new Notice(`error on save projects: ${error instanceof Error ? error.message : String(error)}`);
+			new Notice(t('project.saveError', { message: error instanceof Error ? error.message : String(error) }));
 		}
 		return false;
 	}

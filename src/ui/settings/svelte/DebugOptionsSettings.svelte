@@ -6,6 +6,7 @@
 	import { LOG_LEVEL } from '@/ui/settings/svelte/constants.svelte.js';
 	import './SettingsStyles.css';
 	import { SyncJournalModal } from '@/modals/SyncJournalModal';
+	import { t } from '@/i18n';
 
 	export let plugin: TickTickSync;
 
@@ -38,7 +39,8 @@
 				fileLinksInTickTick: settings.fileLinksInTickTick,
 				taskLinksInObsidian: settings.taskLinksInObsidian,
 				bkupFolder: settings.bkupFolder,
-				skipBackup: settings.skipBackup,
+				backupOnStartup: settings.backupOnStartup,
+				backupRetentionCount: settings.backupRetentionCount,
 				numProjects: (await plugin.service.getProjects()).length,
 				fileTasks: fmdData
 			},
@@ -71,10 +73,10 @@
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(debugString);
-			copyStatus = 'Copied!';
+			copyStatus = t('settings.debug.copyDone');
 			setTimeout(() => (copyStatus = ''), 1500);
 		} catch (e) {
-			copyStatus = 'Copy failed';
+			copyStatus = t('settings.debug.copyFailed');
 			setTimeout(() => (copyStatus = ''), 1500);
 		}
 	}
@@ -89,8 +91,8 @@
 <div class="debug-options">
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Debug mode</div>
-			<div class="setting-item-description">Allow access to developer settings</div>
+			<div class="setting-item-name">{t('settings.debug.modeName')}</div>
+			<div class="setting-item-description">{t('settings.debug.modeDesc')}</div>
 		</div>
 		<div class="setting-item-control">
 			<label class="checkbox-container" class:is-enabled={debugMode}>
@@ -112,8 +114,8 @@
 	{#if debugMode}
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Log Level</div>
-				<div class="setting-item-description">Determine log level</div>
+				<div class="setting-item-name">{t('settings.debug.logLevelName')}</div>
+				<div class="setting-item-description">{t('settings.debug.logLevelDesc')}</div>
 			</div>
 			<div class="TTS-setting-item-control">
 				<select
@@ -133,12 +135,12 @@
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Generate Debug Info.</div>
-			<div class="setting-item-description">Click to report settings for a bug.</div>
+			<div class="setting-item-name">{t('settings.debug.genName')}</div>
+			<div class="setting-item-description">{t('settings.debug.genDesc')}</div>
 		</div>
 		<div class="setting-item-control">
 			<button class="mod-cta" on:click={generateDebug}>
-				Generate
+				{t('settings.debug.genButton')}
 			</button>
 		</div>
 	</div>
@@ -151,7 +153,7 @@
 	    bind:value={debugString}
 	></textarea>
 			<div style="display:flex; align-items:center; gap: 1em; margin-top: 0.5em;">
-				<button on:click={copyToClipboard}>Copy to clipboard</button>
+				<button on:click={copyToClipboard}>{t('settings.debug.copyToClipboard')}</button>
 				{#if copyStatus}
 					<span>{copyStatus}</span>
 				{/if}
@@ -161,8 +163,8 @@
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">Journal Retention</div>
-			<div class="setting-item-description">Days to keep journal entries (1–7)</div>
+			<div class="setting-item-name">{t('settings.debug.retentionName')}</div>
+			<div class="setting-item-description">{t('settings.debug.retentionDesc')}</div>
 		</div>
 		<div class="TTS-setting-item-control">
 			<input
@@ -181,12 +183,12 @@
 
 	<div class="setting-item">
 		<div class="setting-item-info">
-			<div class="setting-item-name">View Sync Journal</div>
-			<div class="setting-item-description">Browse and export sync journal entries</div>
+			<div class="setting-item-name">{t('settings.debug.viewJournalName')}</div>
+			<div class="setting-item-description">{t('settings.debug.viewJournalDesc')}</div>
 		</div>
 		<div class="setting-item-control">
 			<button class="mod-cta" on:click={openJournal}>
-				View Journal
+				{t('settings.debug.viewJournalButton')}
 			</button>
 		</div>
 	</div>

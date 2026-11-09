@@ -1,11 +1,15 @@
 import { GroupVariant, type Query, ShowMetadataVariant, SortingVariant } from '@/query/query';
 import YAML from 'yaml';
+import { t } from '@/i18n';
 
+// 惰性取值：这些警告在渲染时才需要，getter 保证用的是当前语言。
 const possibleWarnings: Record<string, string> = {
-	JsonQuery:
-		'This query is written using JSON. This is deprecated and will be removed in a future version. Please use YAML instead.',
-	GroupParameter:
-		'The \'group\' field is deprecated and will be removed in a future version. Please use \'groupBy\' instead.'
+	get JsonQuery() {
+		return t('query.warnJsonDeprecated');
+	},
+	get GroupParameter() {
+		return t('query.warnGroupDeprecated');
+	}
 };
 
 export class ParsingError extends Error {

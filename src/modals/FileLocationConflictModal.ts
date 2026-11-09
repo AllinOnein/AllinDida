@@ -1,9 +1,9 @@
 import { App, Modal, Setting } from 'obsidian';
+import { t } from '@/i18n';
 
 export type FileLocationConflictAction = 'move' | 'delete-misplaced' | 'delete-correct' | 'skip';
 
 export class FileLocationConflictModal extends Modal {
-	title = 'Misplaced project file';
 	filePath: string;
 	expectedPath: string;
 	projectName: string;
@@ -27,22 +27,21 @@ export class FileLocationConflictModal extends Modal {
 	onOpen() {
 		const { titleEl, contentEl } = this;
 
-		titleEl.setText(this.title);
+		titleEl.setText(t('modal.fileConflict.title'));
 
 		const message =
-			`A file matching project "${this.projectName}" was found at:\n\n` +
-			`${this.filePath}\n\n` +
-			`but it should be located at:\n\n` +
-			`${this.expectedPath}\n\n` +
-			(this.targetExists
-				? 'A file already exists at the expected location. Moving will merge the two files.'
-				: '');
+			t('modal.fileConflict.message', {
+				file: this.filePath,
+				project: this.projectName,
+				expected: this.expectedPath,
+			}) + '\n\n' +
+			(this.targetExists ? t('modal.fileConflict.mergeWarning') : '');
 
 		contentEl.createEl('p', { text: message });
 
 		new Setting(contentEl).addButton(moveBtn => {
 			moveBtn.setClass('ts_button');
-			moveBtn.setButtonText(this.targetExists ? 'Move & Merge' : 'Move to correct location');
+			moveBtn.setButtonText(this.targetExists ? t('modal.fileConflict.moveMerge') : t('modal.fileConflict.move'));
 			moveBtn.onClick(() => {
 				this.result = 'move';
 				this.onSubmit(this.result);
@@ -52,7 +51,7 @@ export class FileLocationConflictModal extends Modal {
 		new Setting(contentEl).addButton(deleteBtn => {
 			deleteBtn.setClass('ts_button');
 			deleteBtn.buttonEl.addClass('mod-destructive');
-			deleteBtn.setButtonText('Delete this file');
+			deleteBtn.setButtonText(t('modal.fileConflict.deleteMisplaced'));
 			deleteBtn.onClick(() => {
 				this.result = 'delete-misplaced';
 				this.onSubmit(this.result);
@@ -63,7 +62,7 @@ export class FileLocationConflictModal extends Modal {
 			new Setting(contentEl).addButton(deleteBtn => {
 				deleteBtn.setClass('ts_button');
 				deleteBtn.buttonEl.addClass('mod-destructive');
-				deleteBtn.setButtonText('Delete file at correct location');
+				deleteBtn.setButtonText(t('modal.fileConflict.deleteCorrect'));
 				deleteBtn.onClick(() => {
 					this.result = 'delete-correct';
 					this.onSubmit(this.result);
@@ -73,7 +72,7 @@ export class FileLocationConflictModal extends Modal {
 		}
 		new Setting(contentEl).addButton(skipBtn => {
 			skipBtn.setClass('ts_button');
-			skipBtn.setButtonText('Skip');
+			skipBtn.setButtonText(t('modal.fileConflict.skip'));
 			skipBtn.onClick(() => {
 				this.result = 'skip';
 				this.onSubmit(this.result);

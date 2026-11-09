@@ -1,10 +1,11 @@
 <script lang="ts">
 	import CollapsibleSection from '@/ui/settings/svelte/sections/CollapsibleSection.svelte';
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { ConfirmFullSyncModal } from '@/modals/ConfirmFullSyncModal';
-	import { onMount } from 'svelte';
 	import { settingsStore } from '@/ui/settings/settingsstore';
 	import { get } from 'svelte/store';
+	import { Notice } from 'obsidian';
+	import { t } from '@/i18n';
 
 	export let open = false;
 	export let plugin;
@@ -14,9 +15,6 @@
 	function handleHeaderClick() {
 		dispatch('toggle');
 	}
-
-	// Use store subscription
-	// $: enableFullVaultSync = $settingsStore.enableFullVaultSync; // Removed redundant local variable
 
 	async function confirmFullSync() {
 		const myModal = new ConfirmFullSyncModal(plugin.app, () => {
@@ -36,15 +34,15 @@
 			if (bConfirmation) {
 				// enable, update store
 				settingsStore.update((s) => ({ ...s, enableFullVaultSync: true }));
-				noticeString = 'Full vault sync is enabled.';
+				noticeString = t('settings.fullVault.enabled');
 			} else {
 				// stay disabled
 				settingsStore.update((s) => ({ ...s, enableFullVaultSync: false }));
-				noticeString = 'Full vault sync not enabled.';
+				noticeString = t('settings.fullVault.notEnabled');
 			}
 		} else {
 			settingsStore.update((s) => ({ ...s, enableFullVaultSync: false }));
-			noticeString = 'Full vault sync is disabled.';
+			noticeString = t('settings.fullVault.disabled');
 		}
 		new Notice(noticeString);
 		await plugin.saveSettings();
@@ -52,20 +50,18 @@
 </script>
 
 <CollapsibleSection
-	title="Full vault sync"
-	shortDesc="Full vault settings"
+	title={t('settings.fullVault.title')}
+	shortDesc={t('settings.fullVault.shortDesc')}
 	open={open}
 	on:headerClick={handleHeaderClick}
 >
 	<div class="Full vault sync">
 		<div class="setting-item">
 			<div class="setting-item-info">
-				<div class="setting-item-name">Full vault sync</div>
+				<div class="setting-item-name">{t('settings.fullVault.title')}</div>
 				<div class="setting-item-description">
-					By default, only tasks marked with #TickTick are synchronized. If this option is turned on, all
-					tasks in
-					the vault will be synchronized.
-					<p><b>NOTE: This includes all tasks that are currently Items of a task.</b></p></div>
+					{t('settings.fullVault.desc')}
+					<p><b>{t('settings.fullVault.note')}</b></p></div>
 			</div>
 			<div class="setting-item-control">
 				<label class="checkbox-container" class:is-enabled={$settingsStore.enableFullVaultSync}>

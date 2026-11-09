@@ -9,6 +9,7 @@
 	import SyncControlSettings from './sections/SyncControlSettings.svelte';
 	import TasksSettings from './TasksSettings.svelte';
 	import { getSettings } from '@/settings';
+	import { t } from '@/i18n';
 
 
 	export let app: App;
@@ -20,12 +21,12 @@
 	let activeTab = 'access';
 
 	const tabs = {
-		access: 'Access Control',
-		sync: 'Sync Control',
-		manual: 'Maintenance',
-		debug: 'Debug Options',
-		tasks: 'Task Settings',
-		notes: 'Notes',
+		access: t('settings.tab.access'),
+		sync: t('settings.tab.sync'),
+		manual: t('settings.tab.manual'),
+		debug: t('settings.tab.debug'),
+		tasks: t('settings.tab.tasks'),
+		notes: t('settings.tab.notes'),
 	};
 </script>
 <div class="ticktick-settings">
