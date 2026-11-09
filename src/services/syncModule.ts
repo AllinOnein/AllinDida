@@ -14,6 +14,7 @@ import { getSettings } from '@/settings';
 import { NewFileMap, type ITaskItemRecord } from '@/services/NewFileMap';
 import log from '@/utils/logger';
 import { db } from "@/db/dexie";
+import { t } from '@/i18n';
 
 export class SyncMan {
 	private readonly app: App;
@@ -206,7 +207,7 @@ export class SyncMan {
 			if (reallyDeletedTickTickTasks.length > 0) {
 				const taskTitlesForConfirmation = reallyDeletedTickTickTasks.map((task: ITask) => task.id);
 
-				const bConfirm = await this.confirmDeletion(taskTitlesForConfirmation, 'tasks deleted from TickTick');
+				const bConfirm = await this.confirmDeletion(taskTitlesForConfirmation, t('modal.taskDeletion.reasonDeletedFromTickTick'));
 
 				if (bConfirm) {
 					//Need to have deletes in parentage order else everything goes Tango Uniform
@@ -321,35 +322,9 @@ export class SyncMan {
 
 
 	async backupTickTickAllResources() {
-		try {
-			// log.debug("backing up.")
-			// if (this.plugin.tickTickSyncAPI) {
-			// log.debug("It's defined", this.plugin.tickTickSyncAPI)
-			// }
-			let bkupFolder = getSettings().bkupFolder;
-			if (bkupFolder[bkupFolder.length - 1] != '/') {
-				bkupFolder += '/';
-			}
-			const now: Date = new Date();
-			const month = now.getMonth() + 1;
-		const timeString: string = `${now.getFullYear()}${month}${now.getDate()}${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
-
-			const name = bkupFolder + 'ticktick-backup-' + timeString + '.csv';
-			log.debug('Creating Backup: ', name);
-
-			const bkupData = await this.plugin.tickTickRestAPI?.exportData();
-
-
-			if (bkupData) {
-				await this.app.vault.create(name, bkupData);
-				//log.debug(`ticktick backup successful`)
-				new Notice(`TickTick backup data is saved in the path ${name}`);
-			}
-		} catch (error) {
-			log.error('An error occurred while creating TickTick backup', error);
-			new Notice('An error occurred while creating TickTick backup' + (error instanceof Error ? error.message : String(error)), 5000);
-		}
-
+		// Delegates to the shared BackupService so startup and the settings
+		// button share one implementation (overwrite + retention).
+		await this.plugin.backupService.backupTickTickData();
 	}
 
 	///End of Test
@@ -428,7 +403,7 @@ export class SyncMan {
 	}
 
 	async handleTaskItem(lineText: string, fileMap: NewFileMap, lineNumber: number | undefined) {
-		if (lineText.contains("Copy Tasks from")) {
+		if (lineText.includes("Copy Tasks from")) {
 			log.debug("Copy Tasks from found.");
 		}
 		let modified = false;
@@ -551,7 +526,7 @@ export class SyncMan {
 		}
 		const result = await this.plugin.tickTickRestAPI?.updateTask(parentTask);
 		const updateFailed = !result;
-		new Notice(`Task ${parentTask.title} modified.`);
+		new Notice(t('task.modified', { title: parentTask.title }));
 		return !updateFailed;
 	}
 

@@ -41,7 +41,23 @@ export interface ITickTickSyncSettings {
 	logLevel: string;
 	journalRetentionDays: number;
 	deletedTaskRetentionDays: number;
+	/**
+	 * @deprecated Superseded by {@link backupOnStartup}. Retained for reading
+	 * legacy `data.json` files; nothing in the plugin reads it any more.
+	 */
 	skipBackup?: boolean;
+	/**
+	 * Take a TickTick data export on every startup.
+	 *
+	 * Defaults to `false`: the export is a full dump of every task, it can only
+	 * be produced a handful of times per day (TickTick rate-limits the export
+	 * endpoint), and nothing in the plugin ever reads it back. Users who want a
+	 * startup backup can opt in, and `backupRetentionCount` bounds how many
+	 * files accumulate in the vault.
+	 */
+	backupOnStartup: boolean;
+	/** How many exported backup files to keep. Older ones are removed. */
+	backupRetentionCount: number;
 
 	//TODO look like one cache object
 	inboxID: string;
@@ -87,6 +103,8 @@ export const DEFAULT_SETTINGS: ITickTickSyncSettings = {
 	inboxName: 'Inbox',
 	checkPoint: 0,
 	skipBackup: false,
+	backupOnStartup: false,
+	backupRetentionCount: 3,
 
 	vaultName: '',
 

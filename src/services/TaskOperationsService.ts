@@ -7,7 +7,6 @@
  * - Move tasks between projects
  * - Move tasks between parents
  * - Update task content after file operations
- * - Backup operations
  */
 
 import { App, Notice, TFile } from 'obsidian';
@@ -16,6 +15,7 @@ import type { ITask } from '@/api/types/Task';
 import { FileTaskQueries } from '@/repositories/FileTaskQueries';
 import { getSettings } from '@/settings';
 import log from '@/utils/logger';
+import { t } from '@/i18n';
 
 export class TaskOperationsService {
 	private app: App;
@@ -37,7 +37,7 @@ export class TaskOperationsService {
 			if (!projectId) { throw new Error('Project ID not found'); }
 			await this.plugin.tickTickRestAPI?.CloseTask(taskId, projectId);
 			await this.plugin.saveSettings();
-			new Notice(`Task ${taskId} is closed.`);
+			new Notice(t('task.closed', { taskId }));
 		} catch (error) {
 			log.error('Error closing task:', error);
 			throw error;
@@ -54,7 +54,7 @@ export class TaskOperationsService {
 			await this.plugin.tickTickRestAPI?.OpenTask(taskId, projectId);
 			await this.plugin.fileOperation.uncompleteTaskInTheFile(taskId);
 			await this.plugin.saveSettings();
-			new Notice(`Task ${taskId} is reopened.`);
+			new Notice(t('task.reopened', { taskId }));
 		} catch (error) {
 			log.error('Error opening task:', error);
 			throw error;
@@ -183,7 +183,7 @@ export class TaskOperationsService {
 			for (const taskId of taskIds) {
 				await this.plugin.fileOperation.completeTaskInTheFile(taskId);
 				await this.plugin.taskRepository.closeTask(taskId);
-				new Notice(`Task ${taskId} is closed.`);
+				new Notice(t('task.closed', { taskId }));
 			}
 
 			await this.plugin.saveSettings();
@@ -201,41 +201,12 @@ export class TaskOperationsService {
 			for (const taskId of taskIds) {
 				await this.plugin.fileOperation.uncompleteTaskInTheFile(taskId);
 				await this.plugin.taskRepository.reopenTask(taskId);
-				new Notice(`Task ${taskId} is reopened.`);
+				new Notice(t('task.reopened', { taskId }));
 			}
 
 			await this.plugin.saveSettings();
 		} catch (error) {
 			log.error('Error synchronizing uncompleted task status:', error);
-			throw error;
-		}
-	}
-
-	/**
-	 * Backup all TickTick resources
-	 */
-	async backupTickTickData(): Promise<void> {
-		try {
-			let bkupFolder = getSettings().bkupFolder;
-			if (bkupFolder[bkupFolder.length - 1] != '/') {
-				bkupFolder += '/';
-			}
-
-			const now: Date = new Date();
-			const timeString: string = `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
-			const filename = bkupFolder + 'ticktick-backup-' + timeString + '.csv';
-
-			log.debug('Creating Backup:', filename);
-
-			const bkupData = await this.plugin.tickTickRestAPI?.exportData();
-
-			if (bkupData) {
-				await this.app.vault.create(filename, bkupData);
-				new Notice(`TickTick backup saved: ${filename}`);
-			}
-		} catch (error) {
-			log.error('An error occurred while creating TickTick backup:', error);
-			new Notice('An error occurred while creating TickTick backup: ' + (error instanceof Error ? error.message : String(error)), 5000);
 			throw error;
 		}
 	}
