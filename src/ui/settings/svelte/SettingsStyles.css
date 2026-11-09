@@ -1,5 +1,22 @@
+/*
+ * 容器内边距。
+ * Obsidian 1.13+ 的 SettingPage 会在 containerEl 外层提供内边距，
+ * 因此这里默认不加 padding，避免缩进过深；只有旧版 PluginSettingTab
+ * 路径（没有框架内边距）才由 .ticktick-settings--standalone 补上。
+ */
 .ticktick-settings {
+	padding: 0;
+}
+
+.ticktick-settings--standalone {
 	padding: 1rem;
+}
+
+/* 库名 -- 版本号，显示在标签页上方 */
+.ticktick-settings-meta {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-bottom: 0.75rem;
 }
 
 .settings-tabs {

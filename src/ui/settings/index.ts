@@ -43,6 +43,8 @@ function getSettingsPageClass(): SettingsPageConstructor {
 					props: {
 						app: this.plugin.app,
 						plugin: this.plugin,
+						// 1.13+ 由框架绘制标题栏，这里不再重复显示「库名 -- 版本」。
+						showMeta: false,
 					},
 				}) as Record<string, unknown> | null;
 			}
@@ -77,6 +79,8 @@ export class TickTickSyncSettingTab extends PluginSettingTab {
 			props: {
 				app: this.plugin.app,
 				plugin: this.plugin,
+				// 旧版 PluginSettingTab 没有框架标题栏，保留「库名 -- 版本」。
+				showMeta: true,
 			},
 		}) as Record<string, unknown> | null;
 	}

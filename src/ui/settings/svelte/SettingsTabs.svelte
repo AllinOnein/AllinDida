@@ -14,6 +14,12 @@
 
 	export let app: App;
 	export let plugin: TickTickSync;
+	/**
+	 * 是否显示「库名 -- 版本」。
+	 * Obsidian 1.13+ 的 SettingPage 自带标题栏，此时传 false 避免重复；
+	 * 旧版 PluginSettingTab 没有标题栏，传 true。
+	 */
+	export let showMeta: boolean = true;
 
 	const vaultName = app.vault.getName();
 	const version = getSettings().version;
@@ -29,11 +35,12 @@
 		notes: t('settings.tab.notes'),
 	};
 </script>
-<div class="ticktick-settings">
-	{vaultName} -- {version}
-</div>
 
-<div class="ticktick-settings">
+<div class="ticktick-settings" class:ticktick-settings--standalone={showMeta}>
+	{#if showMeta}
+		<div class="ticktick-settings-meta">{vaultName} -- {version}</div>
+	{/if}
+
 	<nav class="settings-tabs">
 		{#each Object.entries(tabs) as [id, label]}
 			<button
@@ -43,7 +50,6 @@
 			</button>
 		{/each}
 	</nav>
-
 
 	<div class="TTS-tab-content">
 		{#if activeTab === 'access'}
