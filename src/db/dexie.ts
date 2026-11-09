@@ -68,6 +68,10 @@ class TickTickDB extends Dexie {
 	journal!: Table<JournalEntry, number>;
 
 	constructor(vaultName: string) {
+		// 数据库名刻意沿用上游的 `<vault>TickTickSync` 后缀，**不要**跟着插件 ID 改名。
+		// 插件 ID 从 tickticksync 改成 allindida 后，若这里也跟着改，已有用户的
+		// IndexedDB（全部任务与同步状态）会变成另一个库，表现为「数据全丢、需要重新全量同步」。
+		// 它只是本地存储标识，与插件 ID 无关，保持稳定更安全。
 		super(vaultName + "TickTickSync");
 
 		this.version(4).stores({

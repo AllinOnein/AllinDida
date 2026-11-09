@@ -27,9 +27,9 @@ const zh: Record<keyof typeof en, string> = {
 
 	// ---------------------------------------------------------------- 启动 / 通用通知
 	'startup.pleaseLogin': '请先在设置中登录。',
-	'startup.settingsFailed': '设置加载失败，请重新加载滴答清单同步插件。',
-	'startup.initFailed': '滴答清单同步插件初始化失败，请在设置中检查用户名和密码。',
-	'startup.loaded': '滴答清单同步已加载。',
+	'startup.settingsFailed': '设置加载失败，请重新加载 AllinDida 插件。',
+	'startup.initFailed': 'AllinDida 插件初始化失败，请在设置中检查用户名和密码。',
+	'startup.loaded': 'AllinDida 已加载。',
 	'startup.error': '发生错误：{message}',
 	'sync.completed': '同步完成。',
 	'sync.error': '同步时发生错误：{message}',
@@ -205,7 +205,7 @@ const zh: Record<keyof typeof en, string> = {
 	'modal.latestChanges.gotIt': '知道了',
 
 	// ---------------------------------------------------------------- 设置：标签页
-	'settings.pageName': '滴答清单同步',
+	'settings.pageName': 'AllinDida',
 	'settings.pageDesc': '配置滴答清单同步设置',
 	'settings.tab.access': '账户登录',
 	'settings.tab.sync': '同步控制',
@@ -217,7 +217,7 @@ const zh: Record<keyof typeof en, string> = {
 	// ---------------------------------------------------------------- 设置：登录
 	'settings.login.loggedIn': '你已登录。可以在这里重新登录。',
 	'settings.login.pleaseLogin': '请在此登录。',
-	'settings.login.privacy': '无论使用哪种登录方式，滴答清单同步都不会保存你的用户名或密码。',
+	'settings.login.privacy': '无论使用哪种登录方式，AllinDida 都不会保存你的用户名或密码。',
 	'settings.login.ssoHintDesktop': '如果你的 {provider} 账户启用了 SSO/两步验证，请使用 SSO/两步验证登录。如果使用用户名和密码，请使用常规登录。',
 	'settings.login.mobileHint': '移动端仅支持常规登录。如果你的 {provider} 账户启用了 SSO/两步验证，请先在桌面端登录，将库同步到本设备后即会自动登录。',
 	'settings.login.homeServer': '选择服务器',

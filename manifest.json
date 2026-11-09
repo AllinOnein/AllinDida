@@ -1,9 +1,9 @@
 {
-	"id": "tickticksync",
-	"name": "TickTickSync",
-	"version": "2.1.0",
+	"id": "allindida",
+	"name": "AllinDida",
+	"version": "2.1.1",
 	"minAppVersion": "1.12.7",
-	"description": "Sync tasks and notes bidirectionally with TickTick. Chinese-localized fork with quieter backup behaviour.",
+	"description": "将 Obsidian 待办双向同步到滴答清单（TickTick），支持中文界面。基于 thesamim/TickTickSync 修改。",
 	"author": "AllinOnein",
 	"authorUrl": "https://github.com/AllinOnein/AllinDida",
 	"isDesktopOnly": false

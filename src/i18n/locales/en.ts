@@ -24,9 +24,9 @@ const en = {
 
 	// ---------------------------------------------------------------- 启动 / 通用通知
 	'startup.pleaseLogin': 'Please login from settings.',
-	'startup.settingsFailed': 'Settings failed to load. Please reload the TickTickSync plugin.',
-	'startup.initFailed': 'TickTickSync plugin initialization failed, please check userid and password in settings.',
-	'startup.loaded': 'TickTickSync loaded successfully.',
+	'startup.settingsFailed': 'Settings failed to load. Please reload the AllinDida plugin.',
+	'startup.initFailed': 'AllinDida plugin initialization failed, please check userid and password in settings.',
+	'startup.loaded': 'AllinDida loaded successfully.',
 	'startup.error': 'An error occurred: {message}',
 	'sync.completed': 'Sync completed.',
 	'sync.error': 'An error occurred while syncing: {message}',
@@ -202,7 +202,7 @@ const en = {
 	'modal.latestChanges.gotIt': 'Got it.',
 
 	// ---------------------------------------------------------------- 设置：标签页
-	'settings.pageName': 'TickTickSync',
+	'settings.pageName': 'AllinDida',
 	'settings.pageDesc': 'Configure TickTick synchronization settings',
 	'settings.tab.access': 'Access Control',
 	'settings.tab.sync': 'Sync Control',
@@ -214,7 +214,7 @@ const en = {
 	// ---------------------------------------------------------------- 设置：登录
 	'settings.login.loggedIn': 'You are logged in. You can re-login here.',
 	'settings.login.pleaseLogin': 'Please login here.',
-	'settings.login.privacy': 'Regardless of login option, TickTickSync will not save your User ID or your Password anywhere.',
+	'settings.login.privacy': 'Regardless of login option, AllinDida will not save your User ID or your Password anywhere.',
 	'settings.login.ssoHintDesktop': 'If your {provider} account is set up with SSO/2FA, login using SSO/2FA. If your {provider} account set up with a username and password, login using Regular Login.',
 	'settings.login.mobileHint': 'Mobile only allows Regular Login. If your {provider} account is set up with SSO/2FA, please login from desktop first, synchronize your vault to this device and you will be logged in.',
 	'settings.login.homeServer': 'Select home server',

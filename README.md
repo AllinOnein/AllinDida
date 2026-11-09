@@ -5,6 +5,26 @@
 > **本项目是 [thesamim/TickTickSync](https://github.com/thesamim/TickTickSync) 的衍生版本**，基于其 v2.0.15 代码修改，遵循 **GNU GPL v3.0** 许可证。
 > 主要改动见下方「相对上游的改动」一节。这不是原作者的官方项目，请勿就本版本的问题去打扰原作者。
 
+## 与官方版本的关系
+
+本插件的 ID 为 `allindida`，**与官方 TickTickSync（ID `tickticksync`）互不冲突，可以各自独立安装**。
+
+> ⚠️ **从官方版迁移过来时请注意**
+>
+> 两者是彼此独立的插件，配置与同步缓存不共享：
+>
+> - 插件配置：`.obsidian/plugins/allindida/data.json` 是全新的，需要重新登录滴答清单
+> - 同步缓存：存放在独立的 IndexedDB 中，首次同步会重新拉取全部任务
+>
+> 建议的迁移步骤：
+>
+> 1. 先在官方版里确认同步状态正常
+> 2. 停用官方版（不要删除）
+> 3. 安装并启用 AllinDida，重新登录
+> 4. 等首次全量同步完成后，确认任务都在，再决定是否卸载官方版
+>
+> 如果只想保留一个版本，卸载官方版前请先备份其 `data.json`。
+
 ---
 
 ## 相对上游的改动
@@ -49,7 +69,7 @@
 ### 手动安装
 
 1. 从 [Releases](https://github.com/AllinOnein/AllinDida/releases) 下载 `main.js`、`manifest.json`、`styles.css`
-2. 放入 `<你的库>/.obsidian/plugins/tickticksync/`
+2. 放入 `<你的库>/.obsidian/plugins/allindida/`
 3. 在 Obsidian 的「第三方插件」中启用
 
 ### 从源码构建
@@ -71,7 +91,7 @@ npm run check:i18n   # 中英文案 key 一致性校验
 ## 已知限制
 
 - 仅支持 [Tasks 插件的 emoji 日期格式](https://publish.obsidian.md/tasks/Reference/Task+Formats/About+Task+Formats)。
-- 插件 ID 仍为 `tickticksync`，与官方版本**不能同时安装**，请二选一。
+- 与官方 TickTickSync 的插件 ID 不同，两者可共存，但**配置与同步缓存互不相通**（详见上方迁移说明）。
 
 ## 文档
 

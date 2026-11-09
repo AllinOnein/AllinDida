@@ -1,7 +1,7 @@
 {
-	"name": "tickticksync",
-	"version": "2.1.0",
-	"description": "Sync tasks and notes bidirectionally with TickTick.",
+	"name": "allindida",
+	"version": "2.1.1",
+	"description": "将 Obsidian 待办双向同步到滴答清单（TickTick），支持中文界面。基于 thesamim/TickTickSync 修改。",
 	"main": "main.js",
 	"scripts": {
 		"check": "tsc --noEmit",

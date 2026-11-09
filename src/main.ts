@@ -624,7 +624,7 @@ export default class TickTickSync extends Plugin {
 		this.markdownProcessor.activate();
 
 
-		this.addRibbonIcon('sync', 'TickTickSync', async (evt: MouseEvent) => {
+		this.addRibbonIcon('sync', t('settings.pageName'), async (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			await this.synchronizeNow();
 		});
