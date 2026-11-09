@@ -206,7 +206,6 @@ const zh: Record<keyof typeof en, string> = {
 
 	// ---------------------------------------------------------------- 设置：标签页
 	'settings.pageName': 'AllinDida',
-	'settings.pageDesc': '配置滴答清单同步设置',
 	'settings.tab.access': '账户登录',
 	'settings.tab.sync': '同步控制',
 	'settings.tab.manual': '维护',

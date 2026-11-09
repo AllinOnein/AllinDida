@@ -203,7 +203,6 @@ const en = {
 
 	// ---------------------------------------------------------------- 设置：标签页
 	'settings.pageName': 'AllinDida',
-	'settings.pageDesc': 'Configure TickTick synchronization settings',
 	'settings.tab.access': 'Access Control',
 	'settings.tab.sync': 'Sync Control',
 	'settings.tab.manual': 'Maintenance',

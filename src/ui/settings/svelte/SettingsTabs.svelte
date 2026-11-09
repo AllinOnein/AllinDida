@@ -36,7 +36,7 @@
 	};
 </script>
 
-<div class="ticktick-settings" class:ticktick-settings--standalone={showMeta}>
+<div class="ticktick-settings">
 	{#if showMeta}
 		<div class="ticktick-settings-meta">{vaultName} -- {version}</div>
 	{/if}
